@@ -1,0 +1,48 @@
+#version 300 es
+layout (location = 0) in vec3 coord3d;
+layout (location = 1) in vec3 rgb;
+layout (location = 2) in vec4 mvp_col0;
+layout (location = 3) in vec4 mvp_col1;
+layout (location = 4) in vec4 mvp_col2;
+layout (location = 5) in vec4 mvp_col3;
+layout (location = 6) in vec2 halfViewport;
+out vec3 scr;
+out vec3 rgbv;
+
+//layout (location = 2) in mat4 mvp_matrix;
+void main(void) {
+     mat4 mvp2;
+     mvp2[0] = mvp_col0;
+     mvp2[1] = mvp_col1;
+     mvp2[2] = mvp_col2;
+     mvp2[3] = mvp_col3;
+     vec4 pos = mvp2 * vec4(coord3d, 1.0);
+     gl_Position = pos;
+
+     // antialiasing general concept from https://vitaliburkov.wordpress.com/2016/09/17/simple-and-fast-high-quality-antialiased-lines-with-opengl/
+     // pos is in normalized coordinates.
+     // Now determine the pixel position of this vertex for antialiasing
+     // Two issues need attention:
+     // 1) pos has a non-unity w component. Its x, y needs to be divided by w.
+     // 2) interpolation of fragment shader inputs is in world coordinates,
+     //    not screen coordinates (openGL core has interpolation qualifier "noperspective"
+     //    which would do what we want but it's not supported in openGLES)
+     //    See https://www.khronos.org/registry/OpenGL/specs/es/3.1/es_spec_3.1.pdf
+     //    eq. 13.4 is what we get, eq. 13.5 is what we want.
+     //    Solution: Pre-multiply the vertex quantities with their respective w,
+     //    and divide the 13.4 interpolation result by linearly interpolated w
+     //    which can be obtained by interpolating w in a z-channel.
+
+     //scr = vec3(
+     //	pos.w * (pos.x/pos.w*halfViewport.x + halfViewport.x),
+     //	pos.w * (pos.y/pos.w*halfViewport.y + halfViewport.y),
+     //	pos.w);
+     // can be simplified as:
+
+     scr = vec3(
+     	pos.x*halfViewport.x + halfViewport.x*pos.w,
+	pos.y*halfViewport.y + halfViewport.y*pos.w,
+	pos.w);
+
+     rgbv = rgb;
+}

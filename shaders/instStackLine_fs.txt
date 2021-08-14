@@ -1,0 +1,28 @@
+#version 300 es
+precision mediump float;
+in vec3 rgbv;
+out vec4 fragmentColor;
+in vec3 scr;
+void main(void) {
+     // see vertex shader:
+     // Parameter was premultiplied by vertex w.
+     // The factor is removed here (using w linearly interpolated in z channel).
+     // This achieves "noperspective" interpolation in screen coordinates, not world coordinates
+     
+     vec2 lcxy = scr.xy / scr.z;
+
+     float d = length(gl_FragCoord.xy - lcxy);
+     float linewidth = 1.5f;
+     d = d / linewidth;
+     float b = 1.0f-d;
+     b = min(b, 1.0f);
+     b = max(b, 0.0f);
+     fragmentColor = vec4(rgbv, b);
+
+     // fade out beyond limit distance
+     float fragZ_eyeCoord = gl_FragCoord.z / gl_FragCoord.w; // undo clip coordinates division by w
+     float zmul = 1.0-((fragZ_eyeCoord-8.0f) / 8.0f);
+     zmul = max(zmul, 0.0);
+     zmul = min(zmul, 1.0);
+     fragmentColor.xyz *= zmul;
+}
