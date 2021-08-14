@@ -23,8 +23,8 @@ CFLAGS := -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -O2 -ffast-
 #-DNDEBUG
 LIBS_WIN64 = /mingw64/lib/libglew32.dll.a /mingw64/lib/libglfw3.dll.a -lopengl32
 LIBS_WIN32 = /mingw32/lib/libglew32.dll.a /mingw32/lib/libglfw3.dll.a -lopengl32
-LIBS_RASPI = -lGLEW -lGL -lglfw
-
+LIBS_RASPI = -lGL -lglfw
+# -lGLEW is not needed anymore
 all: main
 
 DEPS := $(patsubst %.o,%.d,$(OBJECTS))
