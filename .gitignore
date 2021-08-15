@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+main
+mainWin32.exe
+mainWin64.exe
