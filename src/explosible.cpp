@@ -1,14 +1,15 @@
+#include <cmath>
+#include <vector>
+#include <cassert>
+#include <glm/ext/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/intersect.hpp>
+
 #include "explosible.h"
 #include "instStackTriInst.h"
 #include "outliner.hpp"
 #include "instMan.h"
 #include "explTraj.h"
-#include <math.h>
-#include <vector>
-#include <assert.h>
-#include <glm/ext/matrix_transform.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/intersect.hpp>
 
 /** One surface of an "explosible" object that may fly away, spinning wildly
  *  Dual purpose: Hitscan detection
@@ -119,10 +120,10 @@ public:
 
   bool lineIntersectCheck(const glm::mat4& proj, const glm::vec3& lineOrig, const glm::vec3& lineDir, float &distLimit) {
     float dist = this->lineIntersectAtDistance (proj, lineOrig, lineDir);
-    if (isnan(dist))
+    if (std::isnan(dist))
       return false;// no intersection
     if (dist > distLimit)
-      return false;// intersection but further away than current limit
+    return false;// intersection but further away than current limit
     distLimit = dist;// update return value to smaller, new distance
     return true;
   }
