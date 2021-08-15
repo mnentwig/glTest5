@@ -1,16 +1,19 @@
+#include <iostream>
+#include <cmath>
+#include <stdlib.h>
+#include <vector>
+
 #include "myGl.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/norm.hpp>
+
 #include "instStackTri.h"
 #include "instStackLine.h"
 #include "instStackTriInst.h"
 #include "renderText.hpp"
-#include <iostream>
-#include <math.h>
 #include "coordReference.hpp"
-#include <stdlib.h>
 #include "outliner.hpp"
-#include <vector>
 #include "instMan.h"
 #include "t1.h"
 #include "fpvInputProcessor.h"
@@ -166,8 +169,8 @@ int main(void){
   GL_CHK(glViewport (0, 0, WIDTH, HEIGHT));
 
   glm::vec3 initPos = glm::vec3 (0, 0, -15);
-  glm::vec3 initDirFwd = glm::vec3(0, 0, 1);
-  glm::vec3 initDirUp = glm::vec3(0, 1, 0);
+  glm::vec3 initDirFwd = glm::vec3 (0, 0, 1);
+  glm::vec3 initDirUp = glm::vec3 (0, 1, 0);
   freeRoamCamera *fpvCam = new freeRoamCamera (initPos, initDirFwd, initDirUp);
   fpsEstimator fpsEst (/*averaging window*/1.0f);
   terrTriDomain d;
@@ -187,7 +190,7 @@ int main(void){
 
   coordReference *coordRef = new coordReference ();
 
-  const unsigned int NT1 = 100;
+  const unsigned int NT1 = 200;
   t1::startup (&im);
   t1 *tanks[NT1];
   const unsigned int divider = 15;
@@ -198,8 +201,11 @@ int main(void){
     glm::vec3 rgbInner = glm::vec3 (0.05f, 0.0f, 0.0f);
     glm::vec3 rgbOuterSelected = glm::vec3 (1.0f, 1.0f, 1.0f);
     glm::vec3 rgbInnerSelected = glm::vec3 (0.05f, 0.0f, 0.0f);
-    tanks[ix] = new t1 (glm::vec3 (12 * gridX, 0, 6 * gridY), rgbOuter,
-                        rgbInner,
+    glm::vec3 pos (12 * gridX, 0, 6 * gridY);
+    glm::vec3 dirFwd = glm::normalize(glm::vec3(-1.0f, 0, 1.0f));
+    glm::vec3 dirUp (0, 1.0f, 0);
+    tanks[ix] = new t1 (pos, dirFwd, dirUp,
+                        rgbOuter, rgbInner,
                         rgbOuterSelected, rgbInnerSelected);
   }
   tanks[0]->explode (glm::vec3 (0, 0, 0), 5.0f, 90.0f * M_PI / 180.0f);
@@ -241,7 +247,7 @@ int main(void){
     terrTri *movTri = NULL;
     d.motion (&movTri, testPos, testDirFwd, testDirUp, 1.0f);
     if (movTri != NULL) {
-  //    fpvCam->setEye (testPos);
+//    fpvCam->setEye (testPos);
     }
 #endif
     glm::mat4 view = fpvCam->getView ();

@@ -1,7 +1,7 @@
 #include "freeRoamCamera.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
-freeRoamCamera::freeRoamCamera(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp):core(pos, dirFwd, dirUp){
+freeRoamCamera::freeRoamCamera(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp) : core (pos, dirFwd, dirUp){
   this->mouseSens = 0.06f * M_PI / 180.0f;
   this->linSpeed = 50.0f;
   this->angSpeed = 120.0f * M_PI / 180.0f;
@@ -39,43 +39,45 @@ void freeRoamCamera::giveInput(fpvInput inp){
   float up = dt * dzdt / 2.0f;
   float lat = dt * dxdt / 2.0f;
 
-  // === half movement pre-rotation ===
-  this->core.move(forw, up, lat);
+// === half movement pre-rotation ===
+  this->core.move (forw, up, lat);
 
-  // === rotation ===
+// === rotation ===
   this->core.rotate (dyawdt * dt + dyaw, dpitchdt * dt + dpitch, drolldt * dt + droll);
 
-  // === half movement post-rotation ===
-  this->core.move(forw, up, lat);
+// === half movement post-rotation ===
+  this->core.move (forw, up, lat);
 }
 
 glm::mat4 freeRoamCamera::getView() const{
-  return this->core.getView();
+  return this->core.getView ();
 }
 
 glm::vec3 freeRoamCamera::getEye() const{
-  return this->core.getPos();
+  return this->core.getPos ();
 }
 
 glm::vec3 freeRoamCamera::getDirFwd() const{
-  return this->core.getDirFwd();
+  return this->core.getDirFwd ();
 }
 
 glm::vec3 freeRoamCamera::getDirUp() const{
-  return this->core.getDirUp();
+  return this->core.getDirUp ();
 }
 
 void freeRoamCamera::setEye(glm::vec3& eye){
-  this->core.setPos(eye);
+  this->core.setPos (eye);
 //  this->eye = eye;
 }
 
 bool freeRoamCamera::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
   if (this->selAttempt) {
     this->selAttempt = false;
-    orig = this->core.getPos();
-    dir = 1000.0f * this->core.getDirFwd();
+    orig = this->core.getPos ();
+    dir = 1000.0f * this->core.getDirFwd (); // FIXME hardcoded constant
     return true;
-  } else return false;
+  } else {
+    return false;
+  }
 }
 

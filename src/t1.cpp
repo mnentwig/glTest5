@@ -1,11 +1,13 @@
 #include <vector>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/closest_point.hpp>
+
+#include "myGl.h"
 #include "t1.h"
 #include "outliner.hpp"
 #include "instMan.h"
 #include "explosible.h"
 #include "utils.h"
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/closest_point.hpp>
 instMan *t1::im = NULL;
 explosible *t1::eBody;
 explosible *t1::eTurret;
@@ -154,10 +156,9 @@ void t1::startup(instMan *im){
   t1::hitscanPrecheckDiameter = 12;
 }
 
-t1::t1(glm::vec3 pos, glm::vec3 rgbOuter, glm::vec3 rgbInner,
+t1::t1(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner,
        glm::vec3 rgbOuterSelected,
-       glm::vec3 rgbInnerSelected){
-  this->pos = pos;
+       glm::vec3 rgbInnerSelected) : core(pos, dirFwd, dirUp){
   this->rgbOuter = rgbOuter;
   this->rgbInner = rgbInner;
   this->rgbOuterSelected = rgbOuterSelected;
@@ -167,7 +168,9 @@ t1::t1(glm::vec3 pos, glm::vec3 rgbOuter, glm::vec3 rgbInner,
 }
 
 void t1::render(const glm::mat4 &proj, bool selected){
-  glm::mat4 projT = glm::translate (proj, this->pos);
+  glm::mat4 projT = glm::translate (proj, this->core.getPos());
+//  glm::mat4 projT = this->core.model2world();
+//projT = proj * projT;
   double now_s = getTime ();
 
   float phi = now_s * M_PI * 0.3;
@@ -189,7 +192,7 @@ void t1::explode(glm::vec3 impact, float speed, float angSpeed){
 }
 
 void t1::renderExplosion(glm::mat4 world2screen){
-  glm::mat4 model2world = glm::translate (glm::mat4 (1.0f), this->pos);
+  glm::mat4 model2world = glm::translate (glm::mat4 (1.0f), this->core.getPos()); // !!!!!!
   glm::mat4 model2screen = world2screen * model2world;
 
   t1::eBody->renderExplosion (model2screen, glm::mat4 (1.0f), this->trajBody,
@@ -214,8 +217,8 @@ bool t1::hitscanCheck(const glm::vec3 &lineOrigin, const glm::vec3 &lineDelta,
                         float &dist) const{
   // === pre-check (optimization) ===
   glm::vec3 lineEndpoint = lineOrigin + lineDelta;
-  glm::vec3 closestPoint = glm::closestPointOnLine(this->pos, lineOrigin, lineEndpoint);
-  float tmpDist = glm::distance(this->pos, closestPoint);
+  glm::vec3 closestPoint = glm::closestPointOnLine(this->core.getPos(), lineOrigin, lineEndpoint);
+  float tmpDist = glm::distance(this->core.getPos(), closestPoint);
   #if 0
   // DEBUG: pick object closest to line
   if (tmpDist < dist){
@@ -226,7 +229,7 @@ bool t1::hitscanCheck(const glm::vec3 &lineOrigin, const glm::vec3 &lineDelta,
 #endif
   if (tmpDist > this->hitscanPrecheckDiameter)
     return false;
-  glm::mat4 transfBody = glm::translate (glm::mat4 (1.0f), this->pos);
+  glm::mat4 transfBody = glm::translate (glm::mat4 (1.0f), this->core.getPos());
 //  glm::mat4 transfTurretGun = glm::translate (this->lastTurretGunRot, this->pos);
   glm::mat4 transfTurretGun = transfBody * this->lastTurretGunRot;
   bool retVal = this->eBody->lineIntersectCheck (transfBody, lineOrigin, lineDelta, dist);

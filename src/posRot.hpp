@@ -37,6 +37,7 @@ public:
     this->pos = pos;
   }
 
+//** applies rotation (intended for camera control by user input, not mathematical exactness) //
   void rotate(float dYaw, float dPitch, float dRoll){
     this->assertSanity ();
 
@@ -52,6 +53,13 @@ public:
     this->dirFwd = this->dirFwd * rot;
     this->dirUp = this->dirUp * rot;
     this->dirLat = this->dirLat * rot;
+  }
+
+  glm::mat4 model2world() const{
+//      glm::mat4 v = glm::lookAt (glm::vec3(0,0,0), this->dirFwd, this->dirUp);
+//v = v * glm::translate (glm::mat4(1.0f), this->pos);
+    return glm::translate (glm::mat4 (1.0f), this->pos);
+//  return v;
   }
 
   void move(float forw, float up, float lat){

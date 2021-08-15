@@ -11,12 +11,14 @@
 #include "instMan.h"
 #include "explTraj.h"
 
+#include "myGl.h"
+
 /** One surface of an "explosible" object that may fly away, spinning wildly
  *  Dual purpose: Hitscan detection
  */
 class fragment {
 public:
-  fragment (unsigned int startIxTriOutline, unsigned int startIxTriFill) {
+  fragment(unsigned int startIxTriOutline, unsigned int startIxTriFill){
     this->startIxTriOutline = startIxTriOutline;
     this->endIxTriOutline = startIxTriOutline;
     this->startIxTriFill = startIxTriFill;
@@ -24,12 +26,12 @@ public:
     this->vertices = new std::vector<glm::vec3> ();
   }
 
-  void addVertex (glm::vec3& v) {
+  void addVertex(glm::vec3& v){
     assert(!this->closed);
     this->vertices->push_back (v);
   }
 
-  void close (unsigned int endIxTriOutline, unsigned int endIxTriFill) {
+  void close(unsigned int endIxTriOutline, unsigned int endIxTriFill){
     assert(!this->closed);
     this->endIxTriOutline = endIxTriOutline;
     this->endIxTriFill = endIxTriFill;
@@ -62,7 +64,7 @@ public:
       int ixMax = 0;
       for (unsigned int ix = 1; ix < vList.size (); ++ix)
         if (vList[ix].distToCenter > vList[ixMax].distToCenter)
-          ixMax = ix;
+        ixMax = ix;
 
 // === get triangle where ixMax identifies the outermost point ===
       int ixPrev = (ixMax - 1 + vList.size ()) % vList.size ();
@@ -81,49 +83,54 @@ public:
   }
 
   /** returns (approximate?) center-of-gravity */
-  glm::vec3 getCog () const {
+  glm::vec3 getCog() const{
     return this->cog;
   }
   /** returns translation matrix to move centered object back to its original location */
-  glm::mat4 getCenterCog () const {
+  glm::mat4 getCenterCog() const{
     return glm::translate (glm::mat4 (1.0f), -this->cog);
   }
   /** returns translation matrix to move object's COG to coordinate origin for rotation */
-  glm::mat4 getUncenterCog () const {
+  glm::mat4 getUncenterCog() const{
     return glm::translate (glm::mat4 (1.0f), this->cog);
   }
 
   /** returns a rotation axis for the part spinning while flying away */
-  glm::vec3 getAxis () const {
+  glm::vec3 getAxis() const{
     glm::vec3 r = (*this->vertices)[0] - this->cog;
     return glm::normalize (r);
   }
 
   static glm::vec3 matMul(const glm::mat4& m, const glm::vec3& v){
-    return glm::vec3(m*glm::vec4(v, 1.0f));
+    return glm::vec3 (m * glm::vec4 (v, 1.0f));
   }
 
-  float lineIntersectAtDistance (const glm::mat4& proj, const glm::vec3& lineOrig, const glm::vec3& lineDir) {
+  float lineIntersectAtDistance(const glm::mat4& proj, const glm::vec3& lineOrig, const glm::vec3& lineDir){
+// TODO don*t need dist
     float dist = glm::length (lineDir);
     for (unsigned int ix = 0; ix < this->collisionTriList.size (); ++ix) {
       collisionTri t = this->collisionTriList[ix];
       glm::vec2 isBary;
       GLfloat d;
-      if (glm::intersectRayTriangle(lineOrig, lineDir,
-                                    matMul(proj, t.p0), matMul(proj, t.p1), matMul(proj, t.p2), isBary, d)) {
-        if ((d >= 0) && (d < dist))
+      if (glm::intersectRayTriangle (lineOrig, lineDir,
+                                     matMul (proj, t.p0),
+                                     matMul (proj, t.p1), matMul (proj, t.p2), isBary, d)) {
+        if ((d >= 0) && (d < dist)) {
           return d;
+        }
       }
     }
-    return NAN;
+    return std::nanf ("");
   }
 
-  bool lineIntersectCheck(const glm::mat4& proj, const glm::vec3& lineOrig, const glm::vec3& lineDir, float &distLimit) {
+  bool lineIntersectCheck(const glm::mat4& proj, const glm::vec3& lineOrig, const glm::vec3& lineDir, float& distLimit){
     float dist = this->lineIntersectAtDistance (proj, lineOrig, lineDir);
-    if (std::isnan(dist))
+    if (std::isnan (dist)) {
       return false;// no intersection
-    if (dist > distLimit)
-    return false;// intersection but further away than current limit
+    }
+    if (dist > distLimit) {
+      return false;// intersection but further away than current limit
+    }
     distLimit = dist;// update return value to smaller, new distance
     return true;
   }
@@ -132,7 +139,7 @@ public:
   unsigned int startIxTriFill;
   unsigned int endIxTriOutline;
   unsigned int endIxTriFill;
-protected:
+  protected:
   std::vector<glm::vec3> *vertices;
   glm::vec3 cog;
   bool closed = false;
@@ -147,7 +154,7 @@ protected:
   std::vector<collisionTri> collisionTriList;
 };
 
-explosible::explosible (instMan *im) {
+explosible::explosible(instMan* im){
   this->im = im;
   this->imHandle = im->openHandle ();
   this->isOutline = this->im->getIsOutline (this->imHandle);
@@ -156,16 +163,16 @@ explosible::explosible (instMan *im) {
                                         this->isFill->getTriCount ());
 }
 
-void explosible::generateOutlinedShape (glm::vec3 *vertices, unsigned int nVertices, float width) {
+void explosible::generateOutlinedShape(glm::vec3* vertices, unsigned int nVertices, float width){
   outliner::generateOutlinedShape (vertices, nVertices, width, this->isOutline, this->isFill);
   for (unsigned int ix = 0; ix < nVertices; ++ix)
     this->currentFragment->addVertex (vertices[ix]);
   this->closeFragment ();
 }
 
-void explosible::generateOutlinedBody (glm::vec3 *vertices1,
-                                       glm::vec3 *vertices2,
-                                       unsigned int nVertices, float width) {
+void explosible::generateOutlinedBody(glm::vec3* vertices1,
+                                      glm::vec3* vertices2,
+                                      unsigned int nVertices, float width){
   glm::vec3 pts[4];
   for (unsigned int ix1 = 0; ix1 < nVertices; ++ix1) {
     unsigned int ix2 = (ix1 + 1) % nVertices;
@@ -174,7 +181,8 @@ void explosible::generateOutlinedBody (glm::vec3 *vertices1,
     pts[2] = vertices2[ix2];
     pts[3] = vertices2[ix1];
     outliner::generateOutlinedShape (pts, /*nVertices*/4, width,
-                                     this->isOutline, this->isFill);
+                                     this->isOutline,
+                                     this->isFill);
     this->currentFragment->addVertex (pts[0]);
     this->currentFragment->addVertex (pts[1]);
     this->currentFragment->addVertex (pts[2]);
@@ -183,27 +191,27 @@ void explosible::generateOutlinedBody (glm::vec3 *vertices1,
   }
 }
 
-void explosible::closeFragment () {
+void explosible::closeFragment(){
   this->currentFragment->close (this->isOutline->getTriCount (), this->isFill->getTriCount ());
   this->fragments.push_back (this->currentFragment);
   this->currentFragment = new fragment (this->isOutline->getTriCount (), this->isFill->getTriCount ());
 }
 
-void explosible::finalize () {
+void explosible::finalize(){
   this->isOutline->finalize ();
   this->isFill->finalize ();
 }
 
-void explosible::render (const glm::mat4 &proj, const glm::vec3 &rgbOuter,
-                         const glm::vec3 &rgbInner) {
+void explosible::render(const glm::mat4& proj, const glm::vec3& rgbOuter,
+                        const glm::vec3& rgbInner){
   this->im->renderInst (this->imHandle, proj, rgbOuter, rgbInner);
 }
 
-void explosible::renderExplosion (const glm::mat4 &model2screen,
-                                  const glm::mat4 &model2model,
-                                  const explTraj &traj,
-                                  const glm::vec3 &rgbOuter,
-                                  const glm::vec3 &rgbInner) {
+void explosible::renderExplosion(const glm::mat4& model2screen,
+                                 const glm::mat4& model2model,
+                                 const explTraj& traj,
+                                 const glm::vec3& rgbOuter,
+                                 const glm::vec3& rgbInner){
   for (unsigned int ix = 0; ix < this->fragments.size (); ++ix) {
     fragment *f = this->fragments[ix];
     glm::mat4 model2model_expl = glm::translate (glm::mat4 (1.0f),
@@ -220,8 +228,8 @@ void explosible::renderExplosion (const glm::mat4 &model2screen,
   }
 }
 
-void explosible::explode (explTraj *traj, glm::vec3 impact, float speed,
-                          float angSpeed) {
+void explosible::explode(explTraj* traj, glm::vec3 impact, float speed,
+                         float angSpeed){
   traj->clear ();
   for (unsigned int ix = 0; ix < this->fragments.size (); ++ix) {
     glm::vec3 dir = this->fragments[ix]->getCog () - impact;
@@ -231,12 +239,12 @@ void explosible::explode (explTraj *traj, glm::vec3 impact, float speed,
   }
 }
 
-bool explosible::lineIntersectCheck (const glm::mat4& transf, const glm::vec3 &lineOrigin,
-                                       const glm::vec3 &lineDir,
-                                       float &distLimit) const {
+bool explosible::lineIntersectCheck(const glm::mat4& transf, const glm::vec3& lineOrigin,
+                                    const glm::vec3& lineDir,
+                                    float& distLimit) const{
   bool retVal = false;
   for (unsigned int ix = 0; ix < this->fragments.size (); ++ix) {
-    retVal |= this->fragments[ix]->lineIntersectCheck(transf, lineOrigin, lineDir, distLimit);
+    retVal |= this->fragments[ix]->lineIntersectCheck (transf, lineOrigin, lineDir, distLimit);
   }
   return retVal;
 }
