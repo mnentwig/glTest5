@@ -42,7 +42,7 @@ static glm::vec3 polygonPt(int pos, int nPts, float radius, float y,
   return glm::vec3 (cos (phi) * radius, y, -sin (phi) * radius);
 }
 
-void t1::createBody(instMan *im, float width, t1params *p){
+void t1::createBody(instMan* im, float width, t1params* p){
   explosible *ex = new explosible (im);
   t1::eBody = ex;
 
@@ -76,7 +76,7 @@ void t1::createBody(instMan *im, float width, t1params *p){
   ex->finalize ();
 }
 
-void t1::createTurret(instMan *im, float width, t1params *par){
+void t1::createTurret(instMan* im, float width, t1params* par){
   explosible *e = new explosible (im);
   t1::eTurret = e;
 
@@ -103,7 +103,7 @@ static glm::vec3 matMul(glm::mat4 m, glm::vec3 v){
   return glm::vec3 (m * glm::vec4 (v, 1.0f));
 }
 
-void t1::createGun(instMan *im, float width, t1params *par){
+void t1::createGun(instMan* im, float width, t1params* par){
   explosible *e = new explosible (im);
   t1::eGun = e;
 
@@ -112,26 +112,20 @@ void t1::createGun(instMan *im, float width, t1params *par){
   std::vector<glm::vec3> vRear;
 
   float a = par->body.height + par->turret.height / 2.0f;
-  glm::mat4 m1 = glm::translate (glm::mat4 (1.0f),
-                                 glm::vec3 (par->turret.radiusTop, a, 0.0f));
+  glm::mat4 m1 = glm::translate (glm::mat4 (1.0f), glm::vec3 (par->turret.radiusTop, a, 0.0f));
   float phi = -90.0f / 180.0f * M_PI;
   glm::mat4 rot = glm::rotate (glm::mat4 (1.0f), phi, glm::vec3 (0, 0, 1));
   m1 *= rot;
   for (unsigned int ix = 0; ix < nV; ++ix) {
-    vRear.push_back (
-                     matMul (
-                             m1,
-                             polygonPt (ix, nV, par->gun.radius, /*y*/0, /*phi_offset*/M_PI)));
-    vFront.push_back (
-                      matMul (m1, polygonPt (ix, nV, par->gun.radius, /*y*/par->gun.length, /*phi_offset*/
-                                             M_PI)));
+    vRear.push_back (matMul (m1, polygonPt (ix, nV, par->gun.radius, /*y*/0, /*phi_offset*/M_PI)));
+    vFront.push_back (matMul (m1, polygonPt (ix, nV, par->gun.radius, /*y*/par->gun.length, /*phi_offset*/M_PI)));
   }
 
   e->generateOutlinedBody (vFront.data (), vRear.data (), nV, width);
   e->finalize ();
 }
 
-void t1::startup(instMan *im){
+void t1::startup(instMan* im){
   assert(t1::im == NULL);
   t1::im = im;
 
@@ -158,7 +152,7 @@ void t1::startup(instMan *im){
 
 t1::t1(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner,
        glm::vec3 rgbOuterSelected,
-       glm::vec3 rgbInnerSelected) : core(pos, dirFwd, dirUp){
+       glm::vec3 rgbInnerSelected) : core (pos, dirFwd, dirUp){
   this->rgbOuter = rgbOuter;
   this->rgbInner = rgbInner;
   this->rgbOuterSelected = rgbOuterSelected;
@@ -167,10 +161,8 @@ t1::t1(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, 
                                         glm::vec3 (0, 1, 0));
 }
 
-void t1::render(const glm::mat4 &proj, bool selected){
-  glm::mat4 projT = glm::translate (proj, this->core.getPos());
-//  glm::mat4 projT = this->core.model2world();
-//projT = proj * projT;
+void t1::render(const glm::mat4& proj, bool selected){
+  glm::mat4 projT = proj * this->core.model2world ();
   double now_s = getTime ();
 
   float phi = now_s * M_PI * 0.3;
@@ -192,7 +184,7 @@ void t1::explode(glm::vec3 impact, float speed, float angSpeed){
 }
 
 void t1::renderExplosion(glm::mat4 world2screen){
-  glm::mat4 model2world = glm::translate (glm::mat4 (1.0f), this->core.getPos()); // !!!!!!
+  glm::mat4 model2world = this->core.model2world ();
   glm::mat4 model2screen = world2screen * model2world;
 
   t1::eBody->renderExplosion (model2screen, glm::mat4 (1.0f), this->trajBody,
@@ -213,13 +205,13 @@ void t1::clock(float deltaT_s){
   this->trajGun.clock (deltaT_s);
 }
 
-bool t1::hitscanCheck(const glm::vec3 &lineOrigin, const glm::vec3 &lineDelta,
-                        float &dist) const{
-  // === pre-check (optimization) ===
+bool t1::hitscanCheck(const glm::vec3& lineOrigin, const glm::vec3& lineDelta,
+                      float& dist) const{
+// === pre-check (optimization) ===
   glm::vec3 lineEndpoint = lineOrigin + lineDelta;
-  glm::vec3 closestPoint = glm::closestPointOnLine(this->core.getPos(), lineOrigin, lineEndpoint);
-  float tmpDist = glm::distance(this->core.getPos(), closestPoint);
-  #if 0
+  glm::vec3 closestPoint = glm::closestPointOnLine (this->core.getPos (), lineOrigin, lineEndpoint);
+  float tmpDist = glm::distance (this->core.getPos (), closestPoint);
+#if 0
   // DEBUG: pick object closest to line
   if (tmpDist < dist){
     dist = tmpDist;
@@ -228,12 +220,11 @@ bool t1::hitscanCheck(const glm::vec3 &lineOrigin, const glm::vec3 &lineDelta,
   return false;
 #endif
   if (tmpDist > this->hitscanPrecheckDiameter)
-    return false;
-  glm::mat4 transfBody = glm::translate (glm::mat4 (1.0f), this->core.getPos());
-//  glm::mat4 transfTurretGun = glm::translate (this->lastTurretGunRot, this->pos);
-  glm::mat4 transfTurretGun = transfBody * this->lastTurretGunRot;
-  bool retVal = this->eBody->lineIntersectCheck (transfBody, lineOrigin, lineDelta, dist);
-  retVal |= this->eTurret->lineIntersectCheck (transfTurretGun, lineOrigin, lineDelta, dist);
-  retVal |= this->eGun->lineIntersectCheck (transfTurretGun, lineOrigin, lineDelta, dist);
+  return false;
+  glm::mat4 model2worldBody = this->core.model2world ();
+  glm::mat4 model2worldTurretGun = model2worldBody * this->lastTurretGunRot;
+  bool retVal = this->eBody->lineIntersectCheck (model2worldBody, lineOrigin, lineDelta, dist);
+  retVal |= this->eTurret->lineIntersectCheck (model2worldTurretGun, lineOrigin, lineDelta, dist);
+  retVal |= this->eGun->lineIntersectCheck (model2worldTurretGun, lineOrigin, lineDelta, dist);
   return retVal;
 }
