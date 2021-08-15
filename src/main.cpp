@@ -202,11 +202,13 @@ int main(void){
     glm::vec3 rgbOuterSelected = glm::vec3 (1.0f, 1.0f, 1.0f);
     glm::vec3 rgbInnerSelected = glm::vec3 (0.05f, 0.0f, 0.0f);
     glm::vec3 pos (12 * gridX, 0, 6 * gridY);
-    glm::vec3 dirFwd = glm::normalize(glm::vec3(-1.0f, 0, 1.0f));
+    glm::vec3 dirFwd = glm::normalize (glm::vec3 (-1.0f, 0, 1.0f));
     glm::vec3 dirUp (0, 1.0f, 0);
     tanks[ix] = new t1 (pos, dirFwd, dirUp,
-                        rgbOuter, rgbInner,
-                        rgbOuterSelected, rgbInnerSelected);
+                        rgbOuter,
+                        rgbInner,
+                        rgbOuterSelected,
+                        rgbInnerSelected);
   }
   tanks[0]->explode (glm::vec3 (0, 0, 0), 5.0f, 90.0f * M_PI / 180.0f);
 
@@ -239,7 +241,12 @@ int main(void){
     }
 
 // === get camera ===
-    fpvCam->giveInput (inputData);
+    if (selected == NULL) {
+      fpvCam->giveInput (inputData);
+    } else {
+      selected->giveInput(inputData);
+    }
+
 #if 1
     glm::vec3 testPos = fpvCam->getEye ();
     glm::vec3 testDirFwd = fpvCam->getDirFwd ();
@@ -250,7 +257,7 @@ int main(void){
 //    fpvCam->setEye (testPos);
     }
 #endif
-    glm::mat4 view = fpvCam->getView ();
+    glm::mat4 view = selected ? selected->getCameraView() : fpvCam->getCameraView ();
     glm::mat4 proj = glm::perspective (45.0f, 1.0f * WIDTH / HEIGHT, 0.01f,
                                        1000.0f) * view;
 
@@ -264,12 +271,14 @@ int main(void){
 // === selection ===
     glm::vec3 selOrig, selDir;
     bool selAttempt = fpvCam->getSelAttempt (selOrig, selDir);
-    float selDist = INFINITY;
     if (selAttempt) {
+      float selDist = INFINITY;
       selected = NULL;
-      for (unsigned int ix = 0; ix < NT1; ++ix)
-        if (tanks[ix]->hitscanCheck (selOrig, selDir, selDist))
-        selected = tanks[ix];
+      for (unsigned int ix = 0; ix < NT1; ++ix) {
+        if (tanks[ix]->hitscanCheck (selOrig, selDir, selDist)) {
+          selected = tanks[ix];
+        }
+      }
     }
 
 // === draw coordinate reference ===

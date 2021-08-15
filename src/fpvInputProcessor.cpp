@@ -76,5 +76,6 @@ fpvInput fpvInputProcessor::run(){
   this->rightButtonChangeDown = false;
 
   r.quitApplication = (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
+  r.key_F1 = (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS);
   return r;
 }

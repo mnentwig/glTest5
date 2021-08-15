@@ -19,6 +19,7 @@ class fpvInput{
   bool key_cameraPitchDown;
   bool key_cameraRollLeft;  
   bool key_cameraRollRight;
+  bool key_F1;
   double mouseDeltaX;
   double mouseDeltaY;
   bool rightButtonChangeDown;

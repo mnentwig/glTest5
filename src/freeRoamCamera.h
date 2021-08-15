@@ -4,17 +4,17 @@
 #include <glm/mat4x4.hpp>
 
 #include "posRot.hpp"
+class t1;
 class freeRoamCamera: public controllable{
  public:
   freeRoamCamera(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp);
-  void giveInput(fpvInput inp);
-  glm::mat4 getView() const;
-  bool getSelAttempt(glm::vec3& orig, glm::vec3& dir);
+  void giveInput(fpvInput inp);// implements controllable::-
+  bool getSelAttempt(glm::vec3& orig, glm::vec3& dir);// implements controllable::-
+  glm::mat4 getCameraView(); // implements controllable::-
   glm::vec3 getEye() const;
   glm::vec3 getDirFwd() const;
   glm::vec3 getDirUp() const;
   void setEye(glm::vec3& eye);
-
  protected:
   posRot core;
   float mouseSens;

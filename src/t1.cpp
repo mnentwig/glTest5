@@ -205,8 +205,7 @@ void t1::clock(float deltaT_s){
   this->trajGun.clock (deltaT_s);
 }
 
-bool t1::hitscanCheck(const glm::vec3& lineOrigin, const glm::vec3& lineDelta,
-                      float& dist) const{
+bool t1::hitscanCheck(const glm::vec3& lineOrigin, const glm::vec3& lineDelta, float& dist) const{
 // === pre-check (optimization) ===
   glm::vec3 lineEndpoint = lineOrigin + lineDelta;
   glm::vec3 closestPoint = glm::closestPointOnLine (this->core.getPos (), lineOrigin, lineEndpoint);
@@ -227,4 +226,56 @@ bool t1::hitscanCheck(const glm::vec3& lineOrigin, const glm::vec3& lineDelta,
   retVal |= this->eTurret->lineIntersectCheck (model2worldTurretGun, lineOrigin, lineDelta, dist);
   retVal |= this->eGun->lineIntersectCheck (model2worldTurretGun, lineOrigin, lineDelta, dist);
   return retVal;
+}
+
+void t1::giveInput(fpvInput inp){
+#if 0
+  float dt = inp.deltaTime_s;
+  float dxdt = 0;
+  float dydt = 0;
+  float dzdt = 0;
+  if (inp.key_strafeLeft) dxdt -= linSpeed;
+  if (inp.key_strafeRight) dxdt += linSpeed;
+  if (inp.key_forw) dydt += linSpeed;
+  if (inp.key_backw) dydt -= linSpeed;
+  if (inp.key_up) dzdt -= linSpeed;
+  if (inp.key_down) dzdt += linSpeed;
+
+  float dyawdt = 0;
+  float dpitchdt = 0;
+  float drolldt = 0;
+  if (inp.key_cameraYawLeft) dyawdt += angSpeed;
+  if (inp.key_cameraYawRight) dyawdt -= angSpeed;
+  if (inp.key_cameraPitchUp) dpitchdt += angSpeed;
+  if (inp.key_cameraPitchDown) dpitchdt -= angSpeed;
+  if (inp.key_cameraRollLeft) drolldt -= angSpeed;
+  if (inp.key_cameraRollRight) drolldt += angSpeed;
+
+  float dyaw = mouseSens * (inp.mouseDeltaX);
+  float dpitch = mouseSens * (inp.mouseDeltaY);
+  float droll = 0;
+  this->selAttempt |= inp.rightButtonChangeDown;
+
+  float forw = dt * dydt / 2.0f;
+  float up = dt * dzdt / 2.0f;
+  float lat = dt * dxdt / 2.0f;
+
+// === half movement pre-rotation ===
+  this->core.move (forw, up, lat);
+
+// === rotation ===
+  this->core.rotate (dyawdt * dt + dyaw, dpitchdt * dt + dpitch, drolldt * dt + droll);
+
+// === half movement post-rotation ===
+  this->core.move (forw, up, lat);
+#endif
+}
+
+bool t1::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
+  return false; // TODO: implement something
+}
+
+glm::mat4 t1::getCameraView(){
+  glm::vec3 cameraPos = this->core.getPos() - 10.0f*this->core.getDirFwd() + 3.0f*this->core.getDirUp();
+  return glm::lookAt (cameraPos, cameraPos+ this->core.getDirFwd(), this->core.getDirUp());
 }

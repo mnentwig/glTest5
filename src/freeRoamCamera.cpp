@@ -49,10 +49,6 @@ void freeRoamCamera::giveInput(fpvInput inp){
   this->core.move (forw, up, lat);
 }
 
-glm::mat4 freeRoamCamera::getView() const{
-  return this->core.getView ();
-}
-
 glm::vec3 freeRoamCamera::getEye() const{
   return this->core.getPos ();
 }
@@ -81,3 +77,6 @@ bool freeRoamCamera::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
   }
 }
 
+glm::mat4 freeRoamCamera::getCameraView(){
+  return this->core.getView ();
+}

@@ -3,10 +3,11 @@
 #include <glm/mat4x4.hpp>
 #include "explTraj.h"
 #include "posRot.hpp"
+#include "controllable.h"
 class instMan;
 class t1params;
 class explosible;
-class t1{
+class t1: public controllable{
  public:
   static instMan* im;
   static void startup(instMan* im);
@@ -16,6 +17,9 @@ class t1{
   void explode(glm::vec3 impact, float speed, float angSpeed);
   void clock(float deltaT_s);
   bool hitscanCheck(const glm::vec3 &lineOrigin, const glm::vec3 &lineDelta, float& dist) const;
+  void giveInput(fpvInput inp);
+  bool getSelAttempt(glm::vec3& orig, glm::vec3& dir);
+  glm::mat4 getCameraView(); // implements controllable::-
 protected:  
 
   //** position and orientation */
