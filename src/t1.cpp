@@ -39,7 +39,7 @@ class t1params {
 static glm::vec3 polygonPt(int pos, int nPts, float radius, float y,
                            float phiOffset = 0){
   float phi = 2 * M_PI * pos / nPts + phiOffset;
-  return glm::vec3 (cos (phi) * radius, y, -sin (phi) * radius);
+  return glm::vec3 (sin (phi) * radius, y, cos (phi) * radius);
 }
 
 void t1::createBody(instMan* im, float width, t1params* p){
@@ -48,22 +48,22 @@ void t1::createBody(instMan* im, float width, t1params* p){
 
 // === side of body ===
   std::vector<glm::vec3> vv;
-  float a = p->body.length / 2.0f - p->body.nose;
+  float a = p->body.length / 2.0f - p->body.rear;
   float b = p->body.length / 2.0f;
-  float c = -p->body.length / 2.0f + p->body.rear;
+  float c = -p->body.length / 2.0f + p->body.nose;
   float d = -p->body.length / 2.0f;
   float e = p->body.height / 2.0f;
   float f = p->body.height;
   float g = p->body.width / 2.0f;
-  vv.push_back (glm::vec3 (a, 0, 0));
-  vv.push_back (glm::vec3 (b, e, 0));
-  vv.push_back (glm::vec3 (a, f, 0));
-  vv.push_back (glm::vec3 (c, f, 0));
-  vv.push_back (glm::vec3 (d, e, 0));
-  vv.push_back (glm::vec3 (c, 0, 0));
+  vv.push_back (glm::vec3 (0, 0, a));
+  vv.push_back (glm::vec3 (0, e, b));
+  vv.push_back (glm::vec3 (0, f, a));
+  vv.push_back (glm::vec3 (0, f, c));
+  vv.push_back (glm::vec3 (0, e, d));
+  vv.push_back (glm::vec3 (0, 0, c));
 
-  glm::mat4 m1 = glm::translate (glm::mat4 (1.0f), glm::vec3 (0.0f, 0.0f, -g));
-  glm::mat4 m2 = glm::translate (glm::mat4 (1.0f), glm::vec3 (0.0f, 0.0f, g));
+  glm::mat4 m1 = glm::translate (glm::mat4 (1.0f), glm::vec3 (-g, 0.0f, 0.0f));
+  glm::mat4 m2 = glm::translate (glm::mat4 (1.0f), glm::vec3 (g, 0.0f, 0.0f));
 
   std::vector<glm::vec3> side1 = myGlTransformVec (vv, m1);
   std::vector<glm::vec3> side2 = myGlTransformVec (vv, m2);
@@ -112,9 +112,9 @@ void t1::createGun(instMan* im, float width, t1params* par){
   std::vector<glm::vec3> vRear;
 
   float a = par->body.height + par->turret.height / 2.0f;
-  glm::mat4 m1 = glm::translate (glm::mat4 (1.0f), glm::vec3 (par->turret.radiusTop, a, 0.0f));
+  glm::mat4 m1 = glm::translate (glm::mat4 (1.0f), glm::vec3 (0.0f, a, -par->turret.radiusTop));
   float phi = -90.0f / 180.0f * M_PI;
-  glm::mat4 rot = glm::rotate (glm::mat4 (1.0f), phi, glm::vec3 (0, 0, 1));
+  glm::mat4 rot = glm::rotate (glm::mat4 (1.0f), phi, glm::vec3 (1, 0, 0));
   m1 *= rot;
   for (unsigned int ix = 0; ix < nV; ++ix) {
     vRear.push_back (matMul (m1, polygonPt (ix, nV, par->gun.radius, /*y*/0, /*phi_offset*/M_PI)));
@@ -165,7 +165,7 @@ void t1::render(const glm::mat4& proj, bool selected){
   glm::mat4 projT = proj * this->core.model2world ();
   double now_s = getTime ();
 
-  float phi = now_s * M_PI * 0.3;
+  float phi = now_s * M_PI * 0.3*0;
   this->lastTurretGunRot = glm::rotate (glm::mat4 (1.0f), phi,
                                         glm::vec3 (0, 1, 0));
 
@@ -229,53 +229,34 @@ bool t1::hitscanCheck(const glm::vec3& lineOrigin, const glm::vec3& lineDelta, f
 }
 
 void t1::giveInput(fpvInput inp){
-#if 0
-  float dt = inp.deltaTime_s;
-  float dxdt = 0;
-  float dydt = 0;
-  float dzdt = 0;
-  if (inp.key_strafeLeft) dxdt -= linSpeed;
-  if (inp.key_strafeRight) dxdt += linSpeed;
-  if (inp.key_forw) dydt += linSpeed;
-  if (inp.key_backw) dydt -= linSpeed;
-  if (inp.key_up) dzdt -= linSpeed;
-  if (inp.key_down) dzdt += linSpeed;
+  float speed = 0;
+  float angSpeed = 0;
+  const float speedMax = 10.0f;
+  const float angSpeedMax = 90.0f * M_PI / 180.0f;
 
-  float dyawdt = 0;
-  float dpitchdt = 0;
-  float drolldt = 0;
-  if (inp.key_cameraYawLeft) dyawdt += angSpeed;
-  if (inp.key_cameraYawRight) dyawdt -= angSpeed;
-  if (inp.key_cameraPitchUp) dpitchdt += angSpeed;
-  if (inp.key_cameraPitchDown) dpitchdt -= angSpeed;
-  if (inp.key_cameraRollLeft) drolldt -= angSpeed;
-  if (inp.key_cameraRollRight) drolldt += angSpeed;
+  if (inp.key_forw) speed += speedMax;
+  if (inp.key_backw) speed -= speedMax;
+  if (inp.key_strafeLeft) angSpeed -= angSpeedMax;
+  if (inp.key_strafeRight) angSpeed += angSpeedMax;
 
-  float dyaw = mouseSens * (inp.mouseDeltaX);
-  float dpitch = mouseSens * (inp.mouseDeltaY);
-  float droll = 0;
-  this->selAttempt |= inp.rightButtonChangeDown;
-
-  float forw = dt * dydt / 2.0f;
-  float up = dt * dzdt / 2.0f;
-  float lat = dt * dxdt / 2.0f;
+  float forw = inp.deltaTime_s * speed / 2.0f;
+  float ang = inp.deltaTime_s * angSpeed;
 
 // === half movement pre-rotation ===
-  this->core.move (forw, up, lat);
+  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
 
 // === rotation ===
-  this->core.rotate (dyawdt * dt + dyaw, dpitchdt * dt + dpitch, drolldt * dt + droll);
+  this->core.rotate (ang, /*pitch*/0, /*roll*/0);// TODO: make 1-arg variant
 
 // === half movement post-rotation ===
-  this->core.move (forw, up, lat);
-#endif
+  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
 }
 
 bool t1::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
-  return false; // TODO: implement something
+  return false;// TODO: implement something
 }
 
 glm::mat4 t1::getCameraView(){
-  glm::vec3 cameraPos = this->core.getPos() - 10.0f*this->core.getDirFwd() + 3.0f*this->core.getDirUp();
-  return glm::lookAt (cameraPos, cameraPos+ this->core.getDirFwd(), this->core.getDirUp());
+  glm::vec3 cameraPos = this->core.getPos () - 10.0f * this->core.getDirFwd () + 3.0f * this->core.getDirUp ();
+  return glm::lookAt (cameraPos, cameraPos + this->core.getDirFwd (), this->core.getDirUp ());
 }
