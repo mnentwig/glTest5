@@ -1,7 +1,7 @@
 #include "terrTriDomain.h"
 #include "terrTri.h"
 #include <vector>
-#include <algorithm>
+#include <algorithm> // std::find
 #include <glm/vec2.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
@@ -66,6 +66,37 @@ terrTriDomain::~terrTriDomain()
     delete (*it);
     ++it;
   }
+}
+
+// see https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
+static float triCheckSign (const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3){
+    return (p1.x - p3.x) * (p2.z - p3.z) - (p2.x - p3.x) * (p1.z - p3.z);
+}
+
+//** checks whether pt lies in triangle v1, v2, v3 in the xz plane. The y dimension is disregarded (dropping pt onto triangle) /*
+static bool pointInTriangle (const glm::vec3& pt, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3){
+    float d1, d2, d3;
+    bool has_neg, has_pos;
+
+    d1 = triCheckSign(pt, v1, v2);
+    d2 = triCheckSign(pt, v2, v3);
+    d3 = triCheckSign(pt, v3, v1);
+
+    has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+    has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+    return !(has_neg && has_pos);
+}
+
+terrTri* terrTriDomain::locateTriByVerticalProjection(const glm::vec3& pos){
+  auto it = this->allTerrTris.begin ();
+  while (it != this->allTerrTris.end ()) {
+    terrTri *t = *(it++);
+    if (pointInTriangle(pos, this->vertices[t->getV0()], this->vertices[t->getV1()], this->vertices[t->getV2()])){
+      return t;
+    }
+  }
+  return NULL;
 }
 
 void terrTriDomain::motion(terrTri** knownLastTri, glm::vec3& position, glm::vec3& dirFwd, glm::vec3& dirUp, float dist){

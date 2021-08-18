@@ -12,6 +12,9 @@ public:
   terrTriVertIx getV0() const;
   terrTriVertIx getV1() const;
   terrTriVertIx getV2() const;
+  glm::vec3 getV0(terrTriDomain* ttd) const;
+  glm::vec3 getV1(terrTriDomain* ttd) const;
+  glm::vec3 getV2(terrTriDomain* ttd) const;
   protected:
   terrTriVertIx v0;
   terrTriVertIx v1;

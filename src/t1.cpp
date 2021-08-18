@@ -159,6 +159,7 @@ t1::t1(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, 
   this->rgbInnerSelected = rgbInnerSelected;
   this->lastTurretGunRot = glm::rotate (glm::mat4 (1.0f), 0.0f,
                                         glm::vec3 (0, 1, 0));
+   this->ttt = NULL;
 }
 
 void t1::render(const glm::mat4& proj, bool selected){
@@ -259,4 +260,12 @@ bool t1::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
 glm::mat4 t1::getCameraView(){
   glm::vec3 cameraPos = this->core.getPos () - 10.0f * this->core.getDirFwd () + 3.0f * this->core.getDirUp ();
   return glm::lookAt (cameraPos, cameraPos + this->core.getDirFwd (), this->core.getDirUp ());
+}
+
+void t1::drop(terrTriDomain* ttd){
+  if (this->ttt)
+    delete this->ttt;
+  this->ttt = new terrTriTracker(ttd);
+  this->ttt->initialize(this->core);
+
 }

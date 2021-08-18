@@ -212,6 +212,10 @@ int main(void){
   }
   tanks[0]->explode (glm::vec3 (0, 0, 0), 5.0f, 90.0f * M_PI / 180.0f);
 
+  for (unsigned int ix = 0; ix < NT1; ++ix) {
+    tanks[ix]->drop(&d);
+  }
+
   crosshairs::startup (&im);
   crosshairs myCrosshairs;
 

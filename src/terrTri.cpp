@@ -1,4 +1,5 @@
 #include "terrTri.h"
+#include "terrTriDomain.h"
 #include <cstdlib>
 #include <vector>
 #include <cassert>
@@ -63,6 +64,16 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
   }
 
   throw new std::runtime_error ("tri is not neighbor (note: need bitwise identical vertices)");
+}
+
+glm::vec3 terrTri::getV0(terrTriDomain* ttd) const{
+  return ttd->getVertex(this->v0);
+}
+glm::vec3 terrTri::getV1(terrTriDomain* ttd) const{
+  return ttd->getVertex(this->v1);
+}
+glm::vec3 terrTri::getV2(terrTriDomain* ttd) const{
+  return ttd->getVertex(this->v2);
 }
 
 terrTriVertIx terrTri::getV0() const{

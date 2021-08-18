@@ -4,9 +4,11 @@
 #include "explTraj.h"
 #include "posRot.hpp"
 #include "controllable.h"
+#include "terrTriTracker.hpp"
 class instMan;
 class t1params;
 class explosible;
+class terrTriDomain;
 class t1: public controllable{
  public:
   static instMan* im;
@@ -20,10 +22,15 @@ class t1: public controllable{
   void giveInput(fpvInput inp);
   bool getSelAttempt(glm::vec3& orig, glm::vec3& dir);
   glm::mat4 getCameraView(); // implements controllable::-
+
+  //** projects on vertical axis onto surface (down and up), updates position, dirFwd and dirUp
+  void drop(terrTriDomain* ttd);
 protected:  
 
   //** position and orientation */
   posRot core;
+
+  terrTriTracker* ttt;
 
   static void createBody(instMan* im, float width, t1params* par);
   static void createTurret(instMan* im, float width, t1params* par);

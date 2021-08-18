@@ -20,17 +20,12 @@ public:
    * @param dist Travel distance
    */
   void motion(terrTri** knownLastTri, glm::vec3& position, glm::vec3& dirFwd, glm::vec3& dirUp, float dist);
-  protected:
+  terrTri* locateTriByVerticalProjection(const glm::vec3& pos);
+
+protected:
   std::vector<glm::vec3> vertices;
 
   std::vector<terrTri*>* getAllTrisUsingPt(terrTriVertIx pt);
-  std::map<terrTriVertIx, std::vector<terrTri*>*> trisUsingPt;
   std::vector<std::vector<terrTri*>*> trisUsingVertex;
   std::vector<terrTri*> allTerrTris;
-  /** temp variable to prevent high number of alloc/dealloc operations */
-  std::vector<terrTri*> n01list;
-  /** temp variable to prevent high number of alloc/dealloc operations */
-  std::vector<terrTri*> n12list;
-  /** temp variable to prevent high number of alloc/dealloc operations */
-  std::vector<terrTri*> n20list;
 };

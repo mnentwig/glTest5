@@ -5,6 +5,8 @@
 #include <glm/mat3x3.hpp>
 #include "terrTriDomain.h"
 class terrTri;
+
+//** manages openGl rendering of map surface */
 class terrain {
 public:
   terrain(const char* filename, terrTriDomain& d);
