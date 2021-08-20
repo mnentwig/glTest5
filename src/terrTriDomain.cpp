@@ -18,7 +18,7 @@ void terrTriDomain::setVertex(terrTriVertIx index, const glm::vec3& pt){
   this->trisUsingVertex[index] = new std::vector<terrTri*> ();
 }
 
-glm::vec3 terrTriDomain::getVertex(terrTriVertIx index){
+const glm::vec3& terrTriDomain::getVertex(terrTriVertIx index){
   return this->vertices[index];
 }
 
@@ -69,7 +69,7 @@ terrTriDomain::~terrTriDomain()
 }
 
 // see https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
-static float triCheckSign (const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3){
+static float triCheckSign (const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
     return (p1.x - p3.x) * (p2.z - p3.z) - (p2.x - p3.x) * (p1.z - p3.z);
 }
 
@@ -92,7 +92,7 @@ terrTri* terrTriDomain::locateTriByVerticalProjection(const glm::vec3& pos){
   auto it = this->allTerrTris.begin ();
   while (it != this->allTerrTris.end ()) {
     terrTri *t = *(it++);
-    if (pointInTriangle(pos, this->vertices[t->getV0()], this->vertices[t->getV1()], this->vertices[t->getV2()])){
+    if (pointInTriangle(pos, t->getV0(this), t->getV1(this), t->getV2(this))){
       return t;
     }
   }
@@ -107,9 +107,9 @@ void terrTriDomain::motion(terrTri** knownLastTri, glm::vec3& position, glm::vec
       terrTri *t = *(it++);
       glm::vec2 isBary;
       float d;
-      glm::vec3 v0 = this->getVertex (t->getV0 ());
-      glm::vec3 v1 = this->getVertex (t->getV1 ());
-      glm::vec3 v2 = this->getVertex (t->getV2 ());
+      glm::vec3 v0 = t->getV0 (this);
+      glm::vec3 v1 = t->getV1 (this);
+      glm::vec3 v2 = t->getV2 (this);
       if (glm::intersectRayTriangle (position, dirUp, v0, v1, v2, isBary, d)) {
         *knownLastTri = t;
         position = v0 + isBary[0] * (v1 - v0) + isBary[1] * (v2 - v0);

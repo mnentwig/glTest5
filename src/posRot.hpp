@@ -37,6 +37,14 @@ public:
     this->pos = pos;
   }
 
+  void setPosFwdUp(const glm::vec3& pos, const glm::vec3& dirFwd, const glm::vec3& dirUp){
+    this->pos = pos;
+    this->dirFwd = dirFwd;
+    this->dirUp = dirUp;
+    this->updateDirLat ();
+    this->assertSanity ();
+  }
+
 //** applies rotation (intended for camera control by user input, not mathematical exactness) //
   void rotate(float dYaw, float dPitch, float dRoll){
     this->assertSanity ();
