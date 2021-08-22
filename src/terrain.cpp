@@ -27,11 +27,16 @@ terrain::terrain(const char* filename, terrTriDomain& d){
   unsigned int nElem = nBytes / sizeof(unsigned short);
   if (nElem * sizeof(unsigned short) != nBytes) throw std::runtime_error ("file length not multiple of number size");
 
-// === determine map size ===
+  // === determine map size ===
   this->nX = sqrt (nElem);
   this->nY = sqrt (nElem);
-  if (this->nX * this->nY != nElem) throw std::runtime_error ("heightmap size not square");
 
+#if 0
+  this->nX = 10;
+  this->nY = 10;
+#else
+  if (this->nX * this->nY != nElem) throw std::runtime_error ("heightmap size not square");
+#endif
 // === load data ===
   unsigned short *data = new unsigned short[nElem];
   std::ifstream f (filename, std::ios::in | std::ios::binary);
@@ -74,7 +79,7 @@ terrain::terrain(const char* filename, terrTriDomain& d){
       l->push_back (d.getVertex (nw));
       l->push_back (d.getVertex (se));
       l->push_back (d.getVertex (sw));
-     // d.registerTri (nw, se, sw);
+      //d.registerTri (nw, se, sw);
       d.registerTri (sw, nw, se);
     }
   }
@@ -94,7 +99,7 @@ terrain::terrain(const char* filename, terrTriDomain& d){
   GL_CHK(glBindBuffer(GL_ARRAY_BUFFER, 0));
   printf ("%1.3f\t%s\n", getTime (), "terrain done");
 
-  delete data;
+  delete [] data;
 }
 
 void terrain::render(glm::mat4& proj, glm::vec3 camera, float maxRenderDistance, glm::vec3& colOdd, glm::vec3& colEven){

@@ -57,6 +57,7 @@ public:
       terrTri *newTri = this->tTracked.track (this->core, dist);
       if (newTri != NULL) {
         this->tTracked = terrTriPlus (newTri, this->ttd);
+        this->tTracked.align(this->core);
       }
     }
   }

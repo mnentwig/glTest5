@@ -178,7 +178,7 @@ int main(void){
   terrTriDomain d;
   terrain myMap ("heightfield/heightfield.raw", d);
   instMan im;
-  d.debug(); assert(0);
+  //d.debug(); assert(0);
   instStackLine *is3 = new instStackLine ();
 //  renderText(is3, "The quick brown fox jumps over the lazy dog");
   glm::mat4 projText = glm::mat4 (1.0f);

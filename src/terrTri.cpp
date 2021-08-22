@@ -28,7 +28,7 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 
   if (ptA_is_v0 && ptB_is_v1) {
     assert(this->n01 == NULL);
-    this->n01 == n;
+    this->n01 = n;
     return;
   }
 
@@ -37,7 +37,7 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 
   if (ptB_is_v0 && ptA_is_v1) {
     assert(this->n01 == NULL);
-    this->n01 == n;
+    this->n01 = n;
     return;
   }
 
@@ -45,7 +45,7 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 
   if (ptA_is_v1 && ptB_is_v2) {
     assert(this->n12 == NULL);
-    this->n12 == n; assert(0);
+    this->n12 = n; assert(0);
     return;
   }
 
@@ -53,23 +53,23 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 
   if (ptB_is_v1 && ptA_is_v2) {
     assert(this->n12 == NULL);
-    this->n12 == n; // assert(0);
+    this->n12 = n; // assert(0);
     return;
   }
 
   if (ptA_is_v2 && ptB_is_v0) {
     assert(this->n20 == NULL);
-    this->n20 == n;
+    this->n20 = n;
     return;
   }
 
   if (ptB_is_v2 && ptA_is_v0) {
     assert(this->n20 == NULL);
-    this->n20 == n;
+    this->n20 = n;
     return;
   }
 
-  throw new std::runtime_error ("tri is not neighbor (note: need bitwise identical vertices)");
+  throw new std::runtime_error ("tri is not neighbor");
 }
 
 const glm::vec3& terrTri::getV0(terrTriDomain* ttd) const{
@@ -91,7 +91,7 @@ void terrTri::getV012(terrTriDomain* ttd, glm::vec3& v0, glm::vec3& v1, glm::vec
 }
 
 terrTri* terrTri::getNeighbor01() const{
-//  std::cout << this->n01 << " " << this->n12 << " " << this->n20 << std::endl;
+  //std::cout << this << ":" << this->n01 << " " << this->n12 << " " << this->n20 << std::endl;
   return this->n01;
 }
 
@@ -101,7 +101,7 @@ terrTri* terrTri::getNeighbor12() const{
 }
 
 terrTri* terrTri::getNeighbor20() const{
-  std::cout << this->n01 << " " << this->n12 << " " << this->n20 <<std::endl;
+//  std::cout << this->n01 << " " << this->n12 << " " << this->n20 <<std::endl;
   return this->n20;
 }
 

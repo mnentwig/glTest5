@@ -7,7 +7,7 @@
 class terrTriDomain {
 public:
   void setVertex(terrTriVertIx index, const glm::vec3& pt);
-  const glm::vec3& getVertex(terrTriVertIx index);
+  const glm::vec3& getVertex(terrTriVertIx index) const;
   void registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertIx p2);
   void reserveVertexSpace(unsigned int n);
   ~terrTriDomain();

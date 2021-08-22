@@ -18,11 +18,11 @@ void terrTriDomain::setVertex(terrTriVertIx index, const glm::vec3& pt){
   assert(index < this->vertices.size ());
 // assert(std::find (this->vertices.begin (), this->vertices.end (), pt) == this->vertices.end ());
   this->vertices[index] = pt;
-
+  assert(this->trisUsingVertex[index] == NULL);
   this->trisUsingVertex[index] = new std::vector<terrTri*> ();
 }
 
-const glm::vec3& terrTriDomain::getVertex(terrTriVertIx index){
+const glm::vec3& terrTriDomain::getVertex(terrTriVertIx index) const{
   return this->vertices[index];
 }
 
@@ -30,12 +30,14 @@ void terrTriDomain::debug(){
   int n01 = 0;
   int n12 = 0;
   int n20 = 0;
+  int count = 0;
   for (auto it = this->allTerrTris.begin (); it != this->allTerrTris.end (); ++it) {
     if ((*it)->getNeighbor01 ()) ++n01;
     if ((*it)->getNeighbor12 ()) ++n12;
     if ((*it)->getNeighbor20 ()) ++n20;
+    ++count;
   }
-  std::cout << n01 << " " << n12 << " " << n20 << std::endl;
+  std::cout << n01 << " " << n12 << " " << n20 << " out of " << count << std::endl;
 }
 
 void terrTriDomain::registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertIx p2){

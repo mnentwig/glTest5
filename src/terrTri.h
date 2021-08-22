@@ -22,6 +22,7 @@ protected:
   terrTriVertIx v0;
   terrTriVertIx v1;
   terrTriVertIx v2;
+public:
   terrTri *n01;
   terrTri *n12;
   terrTri *n20;
