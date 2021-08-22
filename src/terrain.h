@@ -20,6 +20,6 @@ protected:
   GLuint idTriOdd;
   GLuint idTriEven;
   GLuint idProg;
-  glm::vec3 getVertex(unsigned short* data, unsigned int ixX, unsigned int ixY);
-  terrTriVertIx getVertexIx(unsigned int ixX, unsigned int ixY);
+  glm::vec3 getVertex(unsigned short* data, unsigned int ixX, unsigned int ixY) const;
+  terrTriVertIx getVertexIx(unsigned int ixX, unsigned int ixY) const;
 };

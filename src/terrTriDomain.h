@@ -21,6 +21,7 @@ public:
    */
   void motion(terrTri** knownLastTri, glm::vec3& position, glm::vec3& dirFwd, glm::vec3& dirUp, float dist);
   terrTri* locateTriByVerticalProjection(const glm::vec3& pos);
+  void debug();
 
 protected:
   std::vector<glm::vec3> vertices;

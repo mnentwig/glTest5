@@ -146,6 +146,7 @@ int main(void){
   GLFW_CHK;
   glfwSetInputMode (window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   GLFW_CHK;
+
 //if (glfwRawMouseMotionSupported())
 //  glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
@@ -173,10 +174,11 @@ int main(void){
   glm::vec3 initDirUp = glm::vec3 (0, 1, 0);
   freeRoamCamera *fpvCam = new freeRoamCamera (initPos, initDirFwd, initDirUp);
   fpsEstimator fpsEst (/*averaging window*/1.0f);
+
   terrTriDomain d;
   terrain myMap ("heightfield/heightfield.raw", d);
   instMan im;
-
+  d.debug(); assert(0);
   instStackLine *is3 = new instStackLine ();
 //  renderText(is3, "The quick brown fox jumps over the lazy dog");
   glm::mat4 projText = glm::mat4 (1.0f);
@@ -204,7 +206,7 @@ int main(void){
     glm::vec3 pos (12 * gridX, 0, 6 * gridY);
     glm::vec3 dirFwd = glm::normalize (glm::vec3 (-1.0f, 0, 1.0f));
     glm::vec3 dirUp (0, 1.0f, 0);
-    tanks[ix] = new t1 (pos, dirFwd, dirUp,
+    tanks[ix] = new t1 (&d, pos, dirFwd, dirUp,
                         rgbOuter,
                         rgbInner,
                         rgbOuterSelected,
@@ -213,7 +215,7 @@ int main(void){
   tanks[0]->explode (glm::vec3 (0, 0, 0), 5.0f, 90.0f * M_PI / 180.0f);
 
   for (unsigned int ix = 0; ix < NT1; ++ix) {
-    tanks[ix]->drop(&d);
+    tanks[ix]->drop();
   }
 
   crosshairs::startup (&im);
@@ -319,5 +321,6 @@ int main(void){
   }
   im.shutdown ();
   glfwTerminate ();
+  std::cout << "main Done" << std::endl;
   return EXIT_SUCCESS;
 }

@@ -13,7 +13,7 @@ class t1: public controllable{
  public:
   static instMan* im;
   static void startup(instMan* im);
-  t1(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner, glm::vec3 rgbOuterSelected, glm::vec3 rgbInnerSelected);
+  t1(terrTriDomain* ttd, glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner, glm::vec3 rgbOuterSelected, glm::vec3 rgbInnerSelected);
   void render(const glm::mat4& proj, bool selected); // note: delayed via instMan
   void renderExplosion(glm::mat4 world2screen); // note: immediate
   void explode(glm::vec3 impact, float speed, float angSpeed);
@@ -24,13 +24,13 @@ class t1: public controllable{
   glm::mat4 getCameraView(); // implements controllable::-
 
   //** projects on vertical axis onto surface (down and up), updates position, dirFwd and dirUp
-  void drop(terrTriDomain* ttd);
+  void drop();
 protected:  
 
   //** position and orientation */
   posRot core;
 
-  terrTriTracker* ttt;
+  terrTriTracker ttt;
 
   static void createBody(instMan* im, float width, t1params* par);
   static void createTurret(instMan* im, float width, t1params* par);

@@ -74,7 +74,8 @@ terrain::terrain(const char* filename, terrTriDomain& d){
       l->push_back (d.getVertex (nw));
       l->push_back (d.getVertex (se));
       l->push_back (d.getVertex (sw));
-      d.registerTri (nw, se, sw);
+     // d.registerTri (nw, se, sw);
+      d.registerTri (sw, nw, se);
     }
   }
   printf ("%1.3f\t%s\n", getTime (), "openGl buffers");
@@ -151,13 +152,11 @@ void terrain::render(glm::mat4& proj, glm::vec3 camera, float maxRenderDistance,
   GL_CHK(glDisable(GL_CULL_FACE));
 }
 
-terrTriVertIx
-terrain::getVertexIx(unsigned int ixX, unsigned int ixY){
+terrTriVertIx terrain::getVertexIx(unsigned int ixX, unsigned int ixY) const{
   return ixY * this->nX + ixX;
 }
 
-glm::vec3
-terrain::getVertex(unsigned short* data, unsigned int ixX, unsigned int ixY){
+glm::vec3 terrain::getVertex(unsigned short* data, unsigned int ixX, unsigned int ixY) const{
   assert(ixX < this->nX);
   assert(ixY < this->nY);
   unsigned short zi = *(data + ixY * this->nX + ixX);

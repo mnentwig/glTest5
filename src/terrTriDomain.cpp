@@ -5,6 +5,8 @@
 #include <glm/vec2.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
+#include "geomUtils2d.hpp"
+#include <iostream>
 
 void terrTriDomain::reserveVertexSpace(unsigned int n){
   if (n > this->vertices.size ())
@@ -14,12 +16,26 @@ void terrTriDomain::reserveVertexSpace(unsigned int n){
 
 void terrTriDomain::setVertex(terrTriVertIx index, const glm::vec3& pt){
   assert(index < this->vertices.size ());
+// assert(std::find (this->vertices.begin (), this->vertices.end (), pt) == this->vertices.end ());
   this->vertices[index] = pt;
+
   this->trisUsingVertex[index] = new std::vector<terrTri*> ();
 }
 
 const glm::vec3& terrTriDomain::getVertex(terrTriVertIx index){
   return this->vertices[index];
+}
+
+void terrTriDomain::debug(){
+  int n01 = 0;
+  int n12 = 0;
+  int n20 = 0;
+  for (auto it = this->allTerrTris.begin (); it != this->allTerrTris.end (); ++it) {
+    if ((*it)->getNeighbor01 ()) ++n01;
+    if ((*it)->getNeighbor12 ()) ++n12;
+    if ((*it)->getNeighbor20 ()) ++n20;
+  }
+  std::cout << n01 << " " << n12 << " " << n20 << std::endl;
 }
 
 void terrTriDomain::registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertIx p2){
@@ -68,31 +84,11 @@ terrTriDomain::~terrTriDomain()
   }
 }
 
-// see https://stackoverflow.com/questions/2049582/how-to-determine-if-a-point-is-in-a-2d-triangle
-static float triCheckSign (const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3) {
-    return (p1.x - p3.x) * (p2.z - p3.z) - (p2.x - p3.x) * (p1.z - p3.z);
-}
-
-//** checks whether pt lies in triangle v1, v2, v3 in the xz plane. The y dimension is disregarded (dropping pt onto triangle) /*
-static bool pointInTriangle (const glm::vec3& pt, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3){
-    float d1, d2, d3;
-    bool has_neg, has_pos;
-
-    d1 = triCheckSign(pt, v1, v2);
-    d2 = triCheckSign(pt, v2, v3);
-    d3 = triCheckSign(pt, v3, v1);
-
-    has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-
-    return !(has_neg && has_pos);
-}
-
 terrTri* terrTriDomain::locateTriByVerticalProjection(const glm::vec3& pos){
   auto it = this->allTerrTris.begin ();
   while (it != this->allTerrTris.end ()) {
     terrTri *t = *(it++);
-    if (pointInTriangle(pos, t->getV0(this), t->getV1(this), t->getV2(this))){
+    if (geomUtils2d::pointInTriangleNoY (pos, t->getV0 (this), t->getV1 (this), t->getV2 (this))) {
       return t;
     }
   }

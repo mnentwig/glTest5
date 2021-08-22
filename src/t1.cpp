@@ -150,23 +150,21 @@ void t1::startup(instMan* im){
   t1::hitscanPrecheckDiameter = 12;
 }
 
-t1::t1(glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner,
-       glm::vec3 rgbOuterSelected,
-       glm::vec3 rgbInnerSelected) : core (pos, dirFwd, dirUp){
+t1::t1(terrTriDomain* ttd, glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner,
+       glm::vec3 rgbOuterSelected, glm::vec3 rgbInnerSelected) : core (pos, dirFwd, dirUp), ttt (ttd, &this->core){
   this->rgbOuter = rgbOuter;
   this->rgbInner = rgbInner;
   this->rgbOuterSelected = rgbOuterSelected;
   this->rgbInnerSelected = rgbInnerSelected;
   this->lastTurretGunRot = glm::rotate (glm::mat4 (1.0f), 0.0f,
                                         glm::vec3 (0, 1, 0));
-   this->ttt = NULL;
 }
 
 void t1::render(const glm::mat4& proj, bool selected){
   glm::mat4 projT = proj * this->core.model2world ();
   double now_s = getTime ();
 
-  float phi = now_s * M_PI * 0.3*0;
+  float phi = now_s * M_PI * 0.3 * 0;
   this->lastTurretGunRot = glm::rotate (glm::mat4 (1.0f), phi,
                                         glm::vec3 (0, 1, 0));
 
@@ -245,13 +243,13 @@ void t1::giveInput(fpvInput inp){
 
 // === half movement pre-rotation ===
 //  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
-this->ttt->track(this->core, forw);
+  this->ttt.track (forw);
 // === rotation ===
   this->core.rotate (ang, /*pitch*/0, /*roll*/0);// TODO: make 1-arg variant
 
 // === half movement post-rotation ===
 //  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
-  this->ttt->track(this->core, forw);
+  this->ttt.track (forw);
 }
 
 bool t1::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
@@ -263,9 +261,6 @@ glm::mat4 t1::getCameraView(){
   return glm::lookAt (cameraPos, cameraPos + this->core.getDirFwd (), this->core.getDirUp ());
 }
 
-void t1::drop(terrTriDomain* ttd){
-  if (this->ttt)
-    delete this->ttt;
-  this->ttt = new terrTriTracker(ttd);
-  this->ttt->initialize(this->core);
+void t1::drop(){
+  this->ttt.drop();
 }
