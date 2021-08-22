@@ -13,6 +13,9 @@ public:
   const glm::vec3& getV1(terrTriDomain* ttd) const;
   const glm::vec3& getV2(terrTriDomain* ttd) const;
   void getV012(terrTriDomain* ttd, glm::vec3& v0, glm::vec3& v1, glm::vec3& v2) const;
+  terrTri* getNeighbor01() const;
+  terrTri* getNeighbor12() const;
+  terrTri* getNeighbor20() const;
   //** returns orthogonal unity vectors describing the plane and its normal */
 void getAxes(terrTriDomain* ttd, glm::vec3& dirPlane1, glm::vec3& dirPlane2, glm::vec3& dirNorm);
 protected:

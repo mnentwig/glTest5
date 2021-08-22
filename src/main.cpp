@@ -220,7 +220,7 @@ int main(void){
   crosshairs myCrosshairs;
 
   float lastFpsUpdate = 0;
-  t1 *selected = NULL;
+  t1 *selected = tanks[1];
   while (true) {
     glfwPollEvents ();
     if (glfwWindowShouldClose (window))

@@ -74,6 +74,10 @@ public:
     this->pos += this->dirFwd * forw + this->dirUp * up + this->dirLat * lat;
   }
 
+  void move(const glm::vec3& vec){
+    this->pos += vec;
+  }
+
   glm::mat4 getView() const{
     return glm::lookAt (this->pos, this->pos + this->dirFwd, this->dirUp);
   }

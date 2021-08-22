@@ -244,13 +244,14 @@ void t1::giveInput(fpvInput inp){
   float ang = inp.deltaTime_s * angSpeed;
 
 // === half movement pre-rotation ===
-  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
-
+//  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
+this->ttt->track(this->core, forw);
 // === rotation ===
   this->core.rotate (ang, /*pitch*/0, /*roll*/0);// TODO: make 1-arg variant
 
 // === half movement post-rotation ===
-  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
+//  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
+  this->ttt->track(this->core, forw);
 }
 
 bool t1::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
@@ -267,5 +268,4 @@ void t1::drop(terrTriDomain* ttd){
     delete this->ttt;
   this->ttt = new terrTriTracker(ttd);
   this->ttt->initialize(this->core);
-
 }

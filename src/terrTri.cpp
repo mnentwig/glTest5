@@ -90,9 +90,17 @@ void terrTri::getV012(terrTriDomain* ttd, glm::vec3& v0, glm::vec3& v1, glm::vec
   v2 = ttd->getVertex(this->v2);
 }
 
-//static glm::vec3 aProjOnB(const glm::vec3& a, const glm::vec3& b){
-//  return glm::dot(a, b)/glm::length2(b)*b;
-//}
+terrTri* terrTri::getNeighbor01() const{
+  return this->n01;
+}
+
+terrTri* terrTri::getNeighbor12() const{
+  return this->n12;
+}
+
+terrTri* terrTri::getNeighbor20() const{
+  return this->n20;
+}
 
 void terrTri::getAxes(terrTriDomain* ttd, glm::vec3& dirPlane1, glm::vec3& dirPlane2, glm::vec3& dirNorm){
   // === first plane vector: v0->v1 ==
