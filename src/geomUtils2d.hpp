@@ -2,8 +2,6 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-#include "myGl.h"
-#include <iostream>
 class geomUtils2d {
 public:
 
@@ -65,39 +63,13 @@ public:
     outIntersection.y = numY * denomInv;
     assert(std::fabs (denom) > 1e-6f);
 
-#if false
-    // === check range ===
-    if (((outIntersection.x < v0.x) && (outIntersection.x < v1.x))
-        || ((outIntersection.x < v2.x) && (outIntersection.x < v3.x))
-
-        || ((outIntersection.y < v0.y) && (outIntersection.y < v1.y))
-        || ((outIntersection.y < v2.y) && (outIntersection.y < v3.y))
-
-        || ((outIntersection.x > v0.x) && (outIntersection.x > v1.x))
-        || ((outIntersection.x > v2.x) && (outIntersection.x > v3.x))
-
-        || ((outIntersection.y > v0.y) && (outIntersection.y > v1.y))
-        || ((outIntersection.y > v2.y) && (outIntersection.y > v3.y))) {
-
-std::cout << "intersection failed:\n";
-      glmPrint(v0);
-      glmPrint(v1);
-      glmPrint(v2);
-      glmPrint(v3);
-      glmPrint(outIntersection);
-      std::cout << "---\n";
-      return false;
-    }
-#else
     float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) * denomInv;
     float u = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) * denomInv;
-    if ((t < 0) || (t >= 1.0f) || (u < 0) || (t >= 1.0f)) {
+    if ((t < 0) || (t >= 1.0f) || (u < 0) || (t >= 1.0f)){
       return false;
+    } else {
+      return true;
     }
-
-#endif
-
-    return true;
   }
 
 protected:

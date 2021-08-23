@@ -67,7 +67,7 @@ void glmPrint(glm::mat4 m){
 }
 
 void glmPrint(glm::vec3 v){
-  printf("%01.3f\t%01.3f\t%01.3f\n",v.x, v.y, v.z);
+  printf("%01.6f\t%01.6f\t%01.6f\n",v.x, v.y, v.z);
 }
 
 void glmPrint(glm::vec4 v){
