@@ -192,7 +192,7 @@ int main(void){
 
   coordReference *coordRef = new coordReference ();
 
-  const unsigned int NT1 = 200;
+  const unsigned int NT1 = 3;
   t1::startup (&im);
   t1 *tanks[NT1];
   const unsigned int divider = 15;
@@ -203,7 +203,7 @@ int main(void){
     glm::vec3 rgbInner = glm::vec3 (0.05f, 0.0f, 0.0f);
     glm::vec3 rgbOuterSelected = glm::vec3 (1.0f, 1.0f, 1.0f);
     glm::vec3 rgbInnerSelected = glm::vec3 (0.05f, 0.0f, 0.0f);
-    glm::vec3 pos (12 * gridX, 0, 6 * gridY);
+    glm::vec3 pos (12 * gridX+0.1, 0, 6 * gridY+0.2);
     glm::vec3 dirFwd = glm::normalize (glm::vec3 (-1.0f, 0, 1.0f));
     glm::vec3 dirUp (0, 1.0f, 0);
     tanks[ix] = new t1 (&d, pos, dirFwd, dirUp,

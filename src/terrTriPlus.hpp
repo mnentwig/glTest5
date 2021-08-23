@@ -3,6 +3,7 @@
 #include <glm/mat4x4.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/projection.hpp>
+#include <iostream>
 
 #include "terrTri.h"
 #include "terrTriDomain.h"
@@ -51,6 +52,7 @@ public:
     glm::vec3 newDirUp = this->dirNorm;
     glm::vec3 newDirLat = glm::normalize (glm::cross (newDirFwd, newDirUp));
     core->setFwdUpLat (newDirFwd, newDirUp, newDirLat);
+    std::cout << "align\n";
   }
 
   /* moves "dist" in core.dirFwd direction. Does not change core inclination.
@@ -79,12 +81,14 @@ public:
 // TODO three checks have many common subexpressions
       glm::vec3 intersection_constZ;
       terrTri *neighbor = NULL;
-      glmPrint(v0_constZ);
-      glmPrint(v1_constZ);
-      glmPrint(v2_constZ);
-      glmPrint(posStart_constZ);
-      glmPrint(posEnd_constZ);
-      // TODO coplanarity check for posEnd may fail if movement vector is not aligned with tri. Use
+      std::cout << "tri 2d:\n";
+      glmPrint (v0_constZ);
+      glmPrint (v1_constZ);
+      glmPrint (v2_constZ);
+      std::cout << "movement 2d:\n";
+      glmPrint (posStart_constZ);
+      glmPrint (posEnd_constZ);
+// TODO coplanarity check for posEnd may fail if movement vector is not aligned with tri.
       geomUtils2d::assertCoplanarityZ (v0_constZ, v1_constZ, posStart_constZ, posEnd_constZ);
       if (geomUtils2d::calcLineLineIntersectionNoZ (v0_constZ, v1_constZ, posStart_constZ, posEnd_constZ, intersection_constZ)) {
         neighbor = this->trackedTri->getNeighbor01 ();
@@ -96,11 +100,23 @@ public:
         neighbor = this->trackedTri->getNeighbor20 ();
         assert(neighbor);
       } else {
+        // TODO algorithm will fail if moving across a vertex into a tri that is adjacent only in one vertex. E.g. search list of tris with any common vertex as step 2
         assert(0);// no intersection after point-in-triangle failed
       }
-      assert(neighbor);
-      glm::vec3 intersection_3d = intersection_constZ * this->constZToThreeD;
+// === place 2d intersection onto 2d tri z ===
+      intersection_constZ.z = v0_constZ.z;
+      glm::vec3 intersection_3d = this->constZToThreeD * intersection_constZ;
+      std::cout << "pos before tri switch:\n";
+      glmPrint (core->getPos ());
+
+//      const float alpha = 1.0f;
+//      intersection_3d = alpha * intersection_3d + (1.0f-alpha) * neighbor->getCog(this->ttd);
       core->setPos (intersection_3d);
+
+      std::cout << "pos after tri switch:\n";
+      glmPrint (core->getPos ());
+      std::cout << "same in 2d:\n";
+      glmPrint (this->threeDToConstZ * intersection_3d);
       dist -= glm::distance (posStart_constZ, intersection_constZ);
       return neighbor;
     }
@@ -138,5 +154,4 @@ protected:
     assert(std::fabs (glm::dot (this->dir1, this->dir2)) < eps2);
     assert(std::fabs (glm::dot (this->dir2, this->dirNorm)) < eps2);
   }
-}
-;
+};

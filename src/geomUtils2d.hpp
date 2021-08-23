@@ -2,6 +2,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include "myGl.h"
+#include <iostream>
 class geomUtils2d {
 public:
 
@@ -58,11 +60,13 @@ public:
     float numX = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
     float numY = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
     float denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    outIntersection.x = numX / denom;
-    outIntersection.y = numY / denom;
+    float denomInv = 1.0f / denom;
+    outIntersection.x = numX * denomInv;
+    outIntersection.y = numY * denomInv;
     assert(std::fabs (denom) > 1e-6f);
 
-// === check range ===
+#if false
+    // === check range ===
     if (((outIntersection.x < v0.x) && (outIntersection.x < v1.x))
         || ((outIntersection.x < v2.x) && (outIntersection.x < v3.x))
 
@@ -74,10 +78,25 @@ public:
 
         || ((outIntersection.y > v0.y) && (outIntersection.y > v1.y))
         || ((outIntersection.y > v2.y) && (outIntersection.y > v3.y))) {
+
+std::cout << "intersection failed:\n";
+      glmPrint(v0);
+      glmPrint(v1);
+      glmPrint(v2);
+      glmPrint(v3);
+      glmPrint(outIntersection);
+      std::cout << "---\n";
+      return false;
+    }
+#else
+    float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) * denomInv;
+    float u = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) * denomInv;
+    if ((t < 0) || (t >= 1.0f) || (u < 0) || (t >= 1.0f)) {
       return false;
     }
 
-    outIntersection.z = v0.z;// meaningful only if pts are coplanar
+#endif
+
     return true;
   }
 

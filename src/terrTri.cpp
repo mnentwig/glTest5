@@ -45,7 +45,7 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 
   if (ptA_is_v1 && ptB_is_v2) {
     assert(this->n12 == NULL);
-    this->n12 = n; assert(0);
+    this->n12 = n;
     return;
   }
 
@@ -53,7 +53,7 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 
   if (ptB_is_v1 && ptA_is_v2) {
     assert(this->n12 == NULL);
-    this->n12 = n; // assert(0);
+    this->n12 = n;
     return;
   }
 
@@ -73,35 +73,39 @@ void terrTri::registerNeighbor(terrTri* n, terrTriVertIx ptA, terrTriVertIx ptB)
 }
 
 const glm::vec3& terrTri::getV0(terrTriDomain* ttd) const{
-  return ttd->getVertex(this->v0);
+  return ttd->getVertex (this->v0);
 }
 
 const glm::vec3& terrTri::getV1(terrTriDomain* ttd) const{
-  return ttd->getVertex(this->v1);
+  return ttd->getVertex (this->v1);
 }
 
 const glm::vec3& terrTri::getV2(terrTriDomain* ttd) const{
-  return ttd->getVertex(this->v2);
+  return ttd->getVertex (this->v2);
 }
 
 void terrTri::getV012(terrTriDomain* ttd, glm::vec3& v0, glm::vec3& v1, glm::vec3& v2) const{
-  v0 = ttd->getVertex(this->v0);
-  v1 = ttd->getVertex(this->v1);
-  v2 = ttd->getVertex(this->v2);
+  v0 = ttd->getVertex (this->v0);
+  v1 = ttd->getVertex (this->v1);
+  v2 = ttd->getVertex (this->v2);
 }
 
 terrTri* terrTri::getNeighbor01() const{
-  //std::cout << this << ":" << this->n01 << " " << this->n12 << " " << this->n20 << std::endl;
+//std::cout << this << ":" << this->n01 << " " << this->n12 << " " << this->n20 << std::endl;
   return this->n01;
 }
 
 terrTri* terrTri::getNeighbor12() const{
-  //std::cout << this->n01 << " " << this->n12 << " " << this->n20 <<std::endl;
+//std::cout << this->n01 << " " << this->n12 << " " << this->n20 <<std::endl;
   return this->n12;
 }
 
 terrTri* terrTri::getNeighbor20() const{
 //  std::cout << this->n01 << " " << this->n12 << " " << this->n20 <<std::endl;
   return this->n20;
+}
+
+glm::vec3 terrTri::getCog(terrTriDomain* ttd){
+  return (ttd->getVertex (this->v0) + ttd->getVertex (this->v1) + ttd->getVertex (this->v2)) * 0.33333333333f;
 }
 

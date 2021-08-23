@@ -79,8 +79,8 @@ terrain::terrain(const char* filename, terrTriDomain& d){
       l->push_back (d.getVertex (nw));
       l->push_back (d.getVertex (se));
       l->push_back (d.getVertex (sw));
-      //d.registerTri (nw, se, sw);
-      d.registerTri (sw, nw, se);
+      d.registerTri (nw, se, sw);
+      //d.registerTri (sw, nw, se);
     }
   }
   printf ("%1.3f\t%s\n", getTime (), "openGl buffers");

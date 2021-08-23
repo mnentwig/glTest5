@@ -3,8 +3,8 @@
 class terrTriDomain;
 typedef unsigned int terrTriVertIx;
 class terrTri {
-friend terrTriDomain;
-public:
+  friend terrTriDomain;
+  public:
   terrTri(terrTriVertIx v0, terrTriVertIx v1, terrTriVertIx v2);
 
   /** neighbor n has common points pt1 and pt2 */
@@ -17,12 +17,13 @@ public:
   terrTri* getNeighbor12() const;
   terrTri* getNeighbor20() const;
   //** returns orthogonal unity vectors describing the plane and its normal */
-void getAxes(terrTriDomain* ttd, glm::vec3& dirPlane1, glm::vec3& dirPlane2, glm::vec3& dirNorm);
+  void getAxes(terrTriDomain* ttd, glm::vec3& dirPlane1, glm::vec3& dirPlane2, glm::vec3& dirNorm);
+  glm::vec3 getCog(terrTriDomain* ttd);
 protected:
   terrTriVertIx v0;
   terrTriVertIx v1;
   terrTriVertIx v2;
-public:
+  public:
   terrTri *n01;
   terrTri *n12;
   terrTri *n20;
