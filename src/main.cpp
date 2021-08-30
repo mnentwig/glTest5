@@ -251,6 +251,7 @@ int main(void){
       fpvCam->giveInput (inputData);
     } else {
       selected->giveInput(inputData);
+      fpvCam->track(selected);
     }
 
 #if 1
@@ -263,7 +264,8 @@ int main(void){
 //    fpvCam->setEye (testPos);
     }
 #endif
-    glm::mat4 view = selected ? selected->getCameraView() : fpvCam->getCameraView ();
+    glm::mat4 view = //selected ? selected->getCameraView() :
+        fpvCam->getCameraView ();
     glm::mat4 proj = glm::perspective (45.0f, 1.0f * WIDTH / HEIGHT, 0.01f,
                                        1000.0f) * view;
 

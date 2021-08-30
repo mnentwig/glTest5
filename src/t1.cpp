@@ -151,7 +151,8 @@ void t1::startup(instMan* im){
 }
 
 t1::t1(terrTriDomain* ttd, glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner,
-       glm::vec3 rgbOuterSelected, glm::vec3 rgbInnerSelected) : core (pos, dirFwd, dirUp), ttt (ttd, &this->core){
+       glm::vec3 rgbOuterSelected,
+       glm::vec3 rgbInnerSelected) : core (pos, dirFwd, dirUp), ttt (ttd, &this->core){
   this->rgbOuter = rgbOuter;
   this->rgbInner = rgbInner;
   this->rgbOuterSelected = rgbOuterSelected;
@@ -262,5 +263,10 @@ glm::mat4 t1::getCameraView(){
 }
 
 void t1::drop(){
-  this->ttt.drop();
+  this->ttt.drop ();
 }
+
+const posRot& t1::getPosRot() const{
+  return this->core;
+}
+

@@ -15,6 +15,8 @@ class freeRoamCamera: public controllable{
   glm::vec3 getDirFwd() const;
   glm::vec3 getDirUp() const;
   void setEye(glm::vec3& eye);
+  void track(controllable* mob);
+  const posRot& getPosRot() const;
  protected:
   posRot core;
   float mouseSens;

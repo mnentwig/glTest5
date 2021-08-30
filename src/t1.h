@@ -22,6 +22,7 @@ class t1: public controllable{
   void giveInput(fpvInput inp);
   bool getSelAttempt(glm::vec3& orig, glm::vec3& dir);
   glm::mat4 getCameraView(); // implements controllable::-
+  virtual const posRot& getPosRot() const; // implements controllable::-
 
   //** projects on vertical axis onto surface (down and up), updates position, dirFwd and dirUp
   void drop();

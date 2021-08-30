@@ -70,7 +70,7 @@ bool freeRoamCamera::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
   if (this->selAttempt) {
     this->selAttempt = false;
     orig = this->core.getPos ();
-    dir = 1000.0f * this->core.getDirFwd (); // FIXME hardcoded constant
+    dir = 1000.0f * this->core.getDirFwd ();// FIXME hardcoded constant
     return true;
   } else {
     return false;
@@ -80,3 +80,13 @@ bool freeRoamCamera::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
 glm::mat4 freeRoamCamera::getCameraView(){
   return this->core.getView ();
 }
+
+void freeRoamCamera::track(controllable* mob){
+  const posRot& mobCore = mob->getPosRot ();
+  this->core.setPos (mobCore.getPos ()+6.0f*mobCore.getDirUp()-3.0f*this->core.getDirFwd());
+}
+
+const posRot& freeRoamCamera::getPosRot() const{
+  return this->core;
+}
+
