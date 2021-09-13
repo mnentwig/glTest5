@@ -49,10 +49,13 @@ mainWin64.exe: 	$(OBJECTS)
 
 clean:
 	rm -f $(OBJECTS) $(DEPS) main mainWin32.exe mainWin64.exe *~ shaders/*~
-	rm -Rf doxydoc
+	rm -Rf doxydoc html latex
 
 doxydoc:
 	rm -Rf doxydoc
 	doxygen
 
-.PHONY: clean doxygen
+doxyview: doxydoc
+	chromium doxydoc/html/index.html &
+
+.PHONY: clean doxygen doxydoc

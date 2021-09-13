@@ -26,6 +26,7 @@ const glm::vec3& terrTriDomain::getVertex(terrTriVertIx index) const{
   return this->vertices[index];
 }
 
+#if 0
 void terrTriDomain::debug(){
   int n01 = 0;
   int n12 = 0;
@@ -39,6 +40,7 @@ void terrTriDomain::debug(){
   }
   std::cout << n01 << " " << n12 << " " << n20 << " out of " << count << std::endl;
 }
+#endif
 
 void terrTriDomain::registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertIx p2){
   terrTri *t = new terrTri (p0, p1, p2);
@@ -116,5 +118,23 @@ void terrTriDomain::motion(terrTri** knownLastTri, glm::vec3& position, glm::vec
         break;
       }
     }
+  }
+}
+
+std::vector<terrTri*>* terrTriDomain::getTrisUsingVertex(terrTriVertIx pt){
+  return this->trisUsingVertex[pt];
+}
+
+void terrTriDomain::collectNeighbors(std::vector<terrTri*>* collection, terrTriVertIx pt) const{
+  // note: below alg is O{N^2} but N is known to be small (typical number of neighbors)
+  for (auto itSrc = this->trisUsingVertex[pt]->begin (); itSrc != this->trisUsingVertex[pt]->end (); ++itSrc) {
+    // don't add if already in list
+    for (auto itDest = collection->begin (); itDest != collection->end (); ++itDest) {
+      if (*itSrc == *itDest) {
+        goto neighborIsAlreadyInList;
+      }
+    }
+    collection->push_back(*itSrc);
+    neighborIsAlreadyInList:;
   }
 }

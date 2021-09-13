@@ -19,7 +19,12 @@ class terrTri {
   //** returns orthogonal unity vectors describing the plane and its normal */
   void getAxes(terrTriDomain* ttd, glm::vec3& dirPlane1, glm::vec3& dirPlane2, glm::vec3& dirNorm);
   glm::vec3 getCog(terrTriDomain* ttd);
-protected:
+  terrTriVertIx getIxV0() const;
+  terrTriVertIx getIxV1() const;
+  terrTriVertIx getIxV2() const;
+  void collectNeighbors(terrTriDomain* ttd, std::vector<terrTri*>* neighbors) const;
+
+  protected:
   terrTriVertIx v0;
   terrTriVertIx v1;
   terrTriVertIx v2;

@@ -3,7 +3,9 @@
 #include <glm/vec3.hpp>
 #include <vector>
 #include "terrTri.h"
-/** manages adjacency relation of triangles forming a plain e.g. terrain. Note: relies on common vertexes being bitwise identical */
+
+/** Class manages adjacency relation of triangles forming a surface. E.g. map or drivable highway.
+ * The guiding assumption is that a MOB is located on one triangle in the "domain" and may move to an adjacent triangle. */
 class terrTriDomain {
 public:
   void setVertex(terrTriVertIx index, const glm::vec3& pt);
@@ -22,8 +24,9 @@ public:
   void motion(terrTri** knownLastTri, glm::vec3& position, glm::vec3& dirFwd, glm::vec3& dirUp, float dist);
   terrTri* locateTriByVerticalProjection(const glm::vec3& pos);
   void debug();
-
-protected:
+  std::vector<terrTri*>* getTrisUsingVertex(terrTriVertIx pt);
+  void collectNeighbors(std::vector<terrTri*>* collection, terrTriVertIx pt) const;
+  protected:
   std::vector<glm::vec3> vertices;
 
   std::vector<terrTri*>* getAllTrisUsingPt(terrTriVertIx pt);

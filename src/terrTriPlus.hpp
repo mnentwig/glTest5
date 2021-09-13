@@ -76,7 +76,10 @@ public:
       dist = 0.0f;
       return NULL;// NULL indicates no change in tri
     } else {
-// TODO three checks have many common subexpressions
+
+      std::vector<terrTri*> neighbors;
+      this->trackedTri->collectNeighbors(this->ttd, &neighbors);
+      // TODO three checks have many common subexpressions
       glm::vec3 intersection_constZ;
       terrTri *neighbor = NULL;
 #if 0
@@ -100,8 +103,8 @@ public:
         neighbor = this->trackedTri->getNeighbor20 ();
         assert(neighbor);
       } else {
-// TODO algorithm will fail if moving across a vertex into a tri that is adjacent only in one vertex. E.g. search list of tris with any common vertex as step 2
-        assert(0);// no intersection after point-in-triangle failed
+#error unravel the above mess using neighbor detection via terrTri.collectNeighbors
+        assert(0);
       }
 // === place 2d intersection onto 2d tri z ===
       intersection_constZ.z = v0_constZ.z;

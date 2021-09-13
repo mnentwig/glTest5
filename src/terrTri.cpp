@@ -108,4 +108,13 @@ terrTri* terrTri::getNeighbor20() const{
 glm::vec3 terrTri::getCog(terrTriDomain* ttd){
   return (ttd->getVertex (this->v0) + ttd->getVertex (this->v1) + ttd->getVertex (this->v2)) * 0.33333333333f;
 }
+terrTriVertIx terrTri::getIxV0() const{return this->v0;}
+terrTriVertIx terrTri::getIxV1() const{return this->v1;}
+terrTriVertIx terrTri::getIxV2() const{return this->v2;}
+
+void terrTri::collectNeighbors(terrTriDomain* ttd, std::vector<terrTri*>* neighbors) const {
+  ttd->collectNeighbors(neighbors, this->v0);
+  ttd->collectNeighbors(neighbors, this->v1);
+  ttd->collectNeighbors(neighbors, this->v2);
+}
 
