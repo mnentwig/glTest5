@@ -8,7 +8,7 @@
 #include "terrTriDomain.h"
 #include "posRot.hpp"
 #include "geomUtils2d.hpp"
-
+#include <iostream>
 /** wrapper around terrTri with cached storage. Keep only for special terrTris e.g. under MOB, not all (memory) */
 class terrTriPlus {
 public:
@@ -76,10 +76,9 @@ public:
       dist = 0.0f;
       return NULL;// NULL indicates no change in tri
     } else {
-
-      std::vector<terrTri*> neighbors;
-      this->trackedTri->collectNeighbors(this->ttd, &neighbors);
-      // TODO three checks have many common subexpressions
+      // make movement vector one-sided ray (we already know the end point is not inside the tri)
+      posEnd_constZ = posStart_constZ + dirFwd_constZ * dist * 2.34567f;
+// TODO three checks have many common subexpressions
       glm::vec3 intersection_constZ;
       terrTri *neighbor = NULL;
 #if 0
@@ -91,6 +90,31 @@ public:
       glmPrint (posStart_constZ);
       glmPrint (posEnd_constZ);
 #endif
+
+#if 0
+      std::vector<terrTri*> neighbors;
+      this->trackedTri->collectNeighbors (this->ttd, &neighbors);
+
+      for (auto it = neighbors.begin (); it != neighbors.end (); ++it) {
+        glm::vec2 isBary;
+        float d;
+        terrTri *n = *it;
+        bool intersectSuccess = glm::intersectRayTriangle (core->getPos (), core->getDirUp (),
+                                                           n->getV0 (this->ttd),
+                                                           n->getV1 (this->ttd), n->getV2 (this->ttd),
+                                                           isBary,
+                                                           d);
+        if (intersectSuccess) {
+          glm::vec3 newPos = n->getV0 (this->ttd) + isBary[0] * (n->getV1 (this->ttd) - n->getV0 (this->ttd)) + isBary[1] * (n->getV2 (this->ttd) - n->getV0 (this->ttd));
+          core->setPos (newPos);
+          terrTriPlus nn();
+          //this->trackedTri = n;
+          n->align(core);
+          return n;
+        }
+      }
+#endif
+
 // TODO coplanarity check for posEnd may fail if movement vector is not aligned with tri.
       geomUtils2d::assertCoplanarityZ (v0_constZ, v1_constZ, posStart_constZ, posEnd_constZ);
       if (geomUtils2d::calcLineLineIntersectionNoZ (v0_constZ, v1_constZ, posStart_constZ, posEnd_constZ, intersection_constZ)) {
@@ -103,16 +127,24 @@ public:
         neighbor = this->trackedTri->getNeighbor20 ();
         assert(neighbor);
       } else {
-#error unravel the above mess using neighbor detection via terrTri.collectNeighbors
-        assert(0);
+//#error unravel the above mess using neighbor detection via terrTri.collectNeighbors
+
+        // fails because posStart is outside tri
+        std::cout << "fail:\n";
+        glmPrint (v0_constZ);
+         glmPrint (v1_constZ);
+         glmPrint (v2_constZ);
+         glmPrint (posStart_constZ);
+         glmPrint (posEnd_constZ);
+  assert(0);
       }
 // === place 2d intersection onto 2d tri z ===
       intersection_constZ.z = v0_constZ.z;
       glm::vec3 intersection_3d = this->constZToThreeD * intersection_constZ;
 
 // hypothetical numerical precision issue because intersection is exactly on line
-//      const float alpha = 1.0f;
-//      intersection_3d = alpha * intersection_3d + (1.0f-alpha) * neighbor->getCog(this->ttd);
+      const float alpha = 0.999f;
+      intersection_3d = alpha * intersection_3d + (1.0f-alpha) * neighbor->getCog(this->ttd);
       core->setPos (intersection_3d);
       dist -= glm::distance (posStart_constZ, intersection_constZ);
       return neighbor;

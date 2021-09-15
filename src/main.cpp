@@ -192,7 +192,7 @@ int main(void){
 
   coordReference *coordRef = new coordReference ();
 
-  const unsigned int NT1 = 3;
+  const unsigned int NT1 = 13;
   t1::startup (&im);
   t1 *tanks[NT1];
   const unsigned int divider = 15;
@@ -247,12 +247,7 @@ int main(void){
     }
 
 // === get camera ===
-    if (selected == NULL) {
-      fpvCam->giveInput (inputData);
-    } else {
-      selected->giveInput(inputData);
-      fpvCam->track(selected);
-    }
+    fpvCam->giveInput (inputData, selected);
 
 #if 1
     glm::vec3 testPos = fpvCam->getEye ();
