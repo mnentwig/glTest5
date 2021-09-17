@@ -177,6 +177,7 @@ int main(void){
 
   terrTriDomain d;
   terrain myMap ("heightfield/heightfield.raw", d);
+  d.close();
   instMan im;
   //d.debug(); assert(0);
   instStackLine *is3 = new instStackLine ();

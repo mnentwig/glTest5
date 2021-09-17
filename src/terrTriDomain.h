@@ -5,7 +5,8 @@
 #include "terrTri.h"
 
 /** Class manages adjacency relation of triangles forming a surface. E.g. map or drivable highway.
- * The guiding assumption is that a MOB is located on one triangle in the "domain" and may move to an adjacent triangle. */
+ * The guiding assumption is that a MOB is located on one triangle in the "domain" and may move to an adjacent triangle.
+ * TODO: should this be stored / recalled in binary format if building it takes too long? */
 class terrTriDomain {
 public:
   void setVertex(terrTriVertIx index, const glm::vec3& pt);
@@ -25,11 +26,19 @@ public:
   terrTri* locateTriByVerticalProjection(const glm::vec3& pos);
   void debug();
   std::vector<terrTri*>* getTrisUsingVertex(terrTriVertIx pt);
-  void collectNeighbors(std::vector<terrTri*>* collection, terrTriVertIx pt) const;
+//  void collectNeighbors(std::vector<terrTri*>* collection, terrTriVertIx pt) const;
+
+  /** returns averaged normal of all tris using the vertex*/
+  const glm::vec3& getVertexNormal(terrTriVertIx ix) const;
+
+   /** close after all vertices/tris have been added to precompute vertex normals */
+  void close();
   protected:
+  bool state_closed;
   std::vector<glm::vec3> vertices;
 
   std::vector<terrTri*>* getAllTrisUsingPt(terrTriVertIx pt);
   std::vector<std::vector<terrTri*>*> trisUsingVertex;
   std::vector<terrTri*> allTerrTris;
+  std::vector<glm::vec3> vertexNormals;
 };

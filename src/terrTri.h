@@ -23,6 +23,7 @@ class terrTri {
   terrTriVertIx getIxV1() const;
   terrTriVertIx getIxV2() const;
   void collectNeighbors(terrTriDomain* ttd, std::vector<terrTri*>* neighbors) const;
+  glm::vec3 getNormal(terrTriDomain* ttd) const;
 
   protected:
   terrTriVertIx v0;

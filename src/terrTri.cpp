@@ -112,9 +112,15 @@ terrTriVertIx terrTri::getIxV0() const{return this->v0;}
 terrTriVertIx terrTri::getIxV1() const{return this->v1;}
 terrTriVertIx terrTri::getIxV2() const{return this->v2;}
 
+#if 0
 void terrTri::collectNeighbors(terrTriDomain* ttd, std::vector<terrTri*>* neighbors) const {
   ttd->collectNeighbors(neighbors, this->v0);
   ttd->collectNeighbors(neighbors, this->v1);
   ttd->collectNeighbors(neighbors, this->v2);
+}
+#endif
+glm::vec3 terrTri::getNormal(terrTriDomain* ttd) const{
+  glm::vec3 n = glm::cross(this->getV1(ttd)-this->getV0(ttd), this->getV2(ttd)-this->getV1(ttd));
+  return glm::normalize(n);
 }
 

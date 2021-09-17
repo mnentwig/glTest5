@@ -9,6 +9,7 @@
 #include <iostream>
 
 void terrTriDomain::reserveVertexSpace(unsigned int n){
+  assert(this->state_closed == false);
   if (n > this->vertices.size ())
   this->vertices.resize (n);
   this->trisUsingVertex.resize (n);
@@ -16,6 +17,7 @@ void terrTriDomain::reserveVertexSpace(unsigned int n){
 
 void terrTriDomain::setVertex(terrTriVertIx index, const glm::vec3& pt){
   assert(index < this->vertices.size ());
+  assert(this->state_closed == false);
 // assert(std::find (this->vertices.begin (), this->vertices.end (), pt) == this->vertices.end ());
   this->vertices[index] = pt;
   assert(this->trisUsingVertex[index] == NULL);
@@ -43,6 +45,7 @@ void terrTriDomain::debug(){
 #endif
 
 void terrTriDomain::registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertIx p2){
+  assert(this->state_closed == false);
   terrTri *t = new terrTri (p0, p1, p2);
   this->allTerrTris.push_back (t);
   std::vector<terrTri*> *n0 = this->trisUsingVertex[p0];
@@ -79,13 +82,36 @@ void terrTriDomain::registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertI
   n2->push_back (t);
 }
 
-terrTriDomain::~terrTriDomain()
-{
-  auto it = this->allTerrTris.begin ();
-  while (it != this->allTerrTris.end ()) {
-    delete (*it);
-    ++it;
+void terrTriDomain::close(){
+  assert(this->state_closed == false);
+
+// === calculate vertex normals by averaging all tris that use it ===
+  this->vertexNormals.resize (this->allTerrTris.size ());// note: elements are zeroed via default constructor
+  for (auto it = this->allTerrTris.begin (); it != this->allTerrTris.end (); ++it) {
+    terrTri *t = *it;
+    glm::vec3 normal = t->getNormal (this);
+    this->vertexNormals[t->getIxV0 ()] += normal;
+    this->vertexNormals[t->getIxV1 ()] += normal;
+    this->vertexNormals[t->getIxV2 ()] += normal;
   }
+
+// === normalize length of all vertex normals ===
+  for (auto it = this->vertexNormals.begin (); it != this->vertexNormals.end (); ++it) {
+    assert(glm::length (*it) > 1e-3);// vertex without tris using it?
+    *it = glm::normalize (*it);
+  }
+
+  this->state_closed = true;
+}
+
+const glm::vec3& terrTriDomain::getVertexNormal(terrTriVertIx ix) const{
+  assert(this->state_closed == true);
+  return this->vertexNormals[ix];
+}
+
+terrTriDomain::~terrTriDomain(){
+  for (auto it = this->allTerrTris.begin (); it != this->allTerrTris.end (); ++it)
+    delete (*it);
 }
 
 terrTri* terrTriDomain::locateTriByVerticalProjection(const glm::vec3& pos){
@@ -125,6 +151,7 @@ std::vector<terrTri*>* terrTriDomain::getTrisUsingVertex(terrTriVertIx pt){
   return this->trisUsingVertex[pt];
 }
 
+#if 0
 void terrTriDomain::collectNeighbors(std::vector<terrTri*>* collection, terrTriVertIx pt) const{
   // note: below alg is O{N^2} but N is known to be small (typical number of neighbors)
   for (auto itSrc = this->trisUsingVertex[pt]->begin (); itSrc != this->trisUsingVertex[pt]->end (); ++itSrc) {
@@ -138,3 +165,4 @@ void terrTriDomain::collectNeighbors(std::vector<terrTri*>* collection, terrTriV
     neighborIsAlreadyInList:;
   }
 }
+#endif
