@@ -78,9 +78,10 @@ public:
   }
 
   glm::mat4 model2world() const{
+    // === rotation matrix for model orientation ===
     glm::mat4 v = glm::inverse (glm::lookAt (glm::vec3 (0, 0, 0), this->dirFwd, this->dirUp));
+    // === model position ===
     v = glm::translate (glm::mat4 (1.0f), this->pos) * v;
-//    return glm::translate (glm::mat4 (1.0f), this->pos);
     return v;
   }
 
