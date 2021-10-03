@@ -9,6 +9,7 @@
  * TODO: should this be stored / recalled in binary format if building it takes too long? */
 class terrTriDomain {
 public:
+  terrTriDomain();
   void setVertex(terrTriVertIx index, const glm::vec3& pt);
   const glm::vec3& getVertex(terrTriVertIx index) const;
   void registerTri(terrTriVertIx p0, terrTriVertIx p1, terrTriVertIx p2);

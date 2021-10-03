@@ -8,7 +8,11 @@
 #include "geomUtils2d.hpp"
 #include <iostream>
 
-void terrTriDomain::reserveVertexSpace(unsigned int n){
+terrTriDomain::terrTriDomain(){
+  this->state_closed = false;
+}
+
+  void terrTriDomain::reserveVertexSpace(unsigned int n){
   assert(this->state_closed == false);
   if (n > this->vertices.size ())
   this->vertices.resize (n);
@@ -97,8 +101,10 @@ void terrTriDomain::close(){
 
 // === normalize length of all vertex normals ===
   for (auto it = this->vertexNormals.begin (); it != this->vertexNormals.end (); ++it) {
-    assert(glm::length (*it) > 1e-3);// vertex without tris using it?
-    *it = glm::normalize (*it);
+    //assert(glm::length (*it) > 1e-3);// vertex without tris using it?
+    if (glm::length (*it) > 1e-3){ // TODO: why unused vertices?
+      *it = glm::normalize (*it);
+    }
   }
 
   this->state_closed = true;
