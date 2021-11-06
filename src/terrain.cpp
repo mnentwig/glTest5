@@ -43,7 +43,7 @@ terrain::terrain(const char* filename, terrTriDomain& d){
   if (f.rdstate () & std::ifstream::failbit) std::runtime_error ("heightmap open failed");
 
   if (!f.read ((char*) data, nBytes)) std::runtime_error ("heightmap read failed");
-  if (f.gcount () != nBytes) throw std::runtime_error ("heightmap read failed (nbytes)");
+  if ((unsigned int)f.gcount () != nBytes) throw std::runtime_error ("heightmap read failed (nbytes)");
   f.close ();
 
   printf ("%1.3f\t%s\n", getTime (), "registering tris");
