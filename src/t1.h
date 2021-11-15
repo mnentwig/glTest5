@@ -5,6 +5,7 @@
 #include "posRot.hpp"
 #include "controllable.h"
 #include "terrTriTracker.hpp"
+#include "mobNormalInterpolator.hpp"
 class instMan;
 class t1params;
 class explosible;
@@ -14,7 +15,7 @@ class t1: public controllable{
   static instMan* im;
   static void startup(instMan* im);
   t1(terrTriDomain* ttd, glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner, glm::vec3 rgbOuterSelected, glm::vec3 rgbInnerSelected);
-  void render(const glm::mat4& proj, bool selected); // note: delayed via instMan
+  void render(const glm::mat4& proj, bool selected, float now_s); // note: delayed via instMan
   void renderExplosion(glm::mat4 world2screen); // note: immediate
   void explode(glm::vec3 impact, float speed, float angSpeed);
   void clock(float deltaT_s);
@@ -28,8 +29,10 @@ class t1: public controllable{
   void drop();
 protected:  
 
-  //** position and orientation */
+  //** position and orientation (surface-aligned. Note, normal vector is time varying) */
   posRot core;
+  //** time-varying normal vector */
+  mobNormalInterpolator coreNorm = mobNormalInterpolator(90.0f);
 
   terrTriTracker ttt;
 

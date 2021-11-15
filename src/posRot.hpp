@@ -85,6 +85,14 @@ public:
     return v;
   }
 
+  glm::mat4 model2world(glm::vec3& dirUp) const{
+    // === rotation matrix for model orientation ===
+    glm::mat4 v = glm::inverse (glm::lookAt (glm::vec3 (0, 0, 0), this->dirFwd, dirUp));
+    // === model position ===
+    v = glm::translate (glm::mat4 (1.0f), this->pos) * v;
+    return v;
+  }
+
   void move(float forw, float up, float lat){
     this->pos += this->dirFwd * forw + this->dirUp * up + this->dirLat * lat;
   }

@@ -141,7 +141,6 @@ protected:
 
       while (vList.size () > 2) {
 // === locate outermost vertex ===
-        fillVertex vMax = vList[0];
         int ixMax = 0;
         for (unsigned int ix = 1; ix < vList.size (); ++ix)
           if (vList[ix].distToCenter > vList[ixMax].distToCenter)

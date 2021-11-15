@@ -298,7 +298,7 @@ int main(void){
     im.startFrame ();
     tanks[0]->renderExplosion (proj);
     for (unsigned int ix = 1; ix < NT1; ++ix) {
-      tanks[ix]->render (proj, tanks[ix] == selected);
+      tanks[ix]->render (proj, tanks[ix] == selected, inputData.time_s);
     }
 
 // === crosshairs ===

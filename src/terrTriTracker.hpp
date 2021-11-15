@@ -5,7 +5,8 @@
 #include "terrTri.h"
 #include "terrTriPlus.hpp"
 #include "terrTriDomain.h"
-/** manages movement along the surface of a terrTriDomain */
+#include "mobNormalInterpolator.hpp"
+/** instance is associated with one mob instance. Manages movement along the surface of a terrTriDomain */
 class terrTriTracker {
 public:
   terrTriTracker(terrTriDomain* ttd, posRot* core) : tTracked (NULL, NULL){
@@ -13,11 +14,15 @@ public:
     this->core = core;
   }
 
+  void setMobNormalInterpolator(mobNormalInterpolator* mni){
+    this->mni = mni;
+  }
+
   /** initializes terrTriTracker with point p that gets projected on surface.
    * Adjusts inclination of core.
    * returns true if successful (p becomes projected point) or false otherwise (p remains unchanged) */
   bool drop(){
-    glm::vec3 origPos = this->core->getPos();
+    glm::vec3 origPos = this->core->getPos ();
 
 // === fast intersection in 2D ===
     terrTri *t = this->ttd->locateTriByVerticalProjection (origPos);
@@ -39,7 +44,7 @@ public:
       glm::vec3 newPos = v0 + isBary[0] * (v1 - v0) + isBary[1] * (v2 - v0);
 
       this->core->setPos (newPos);
-      this->tTracked.align(this->core);
+      this->tTracked.align (this->core);
       return true;
     }
     return false;
@@ -51,22 +56,35 @@ public:
 // TODO create projectMobVector() in terrTri, move out here
 
   /** moves a distance dist (can be negative) in the direction of dirFwd (projected onto map).
-   * returns new dirFwd and dirUp */
-  void track(float& dist){
+   * returns true if moved to a new triangle.
+   * Interpolated normal is NOT updated*/
+  bool track(float& dist){
+    bool movedToNewTri = false;
     while (dist > 0.0f) {
       terrTri *newTri = this->tTracked.track (this->core, dist);
       if (newTri != NULL) {
         this->tTracked = terrTriPlus (newTri, this->ttd);
-        this->tTracked.align(this->core);
+        this->tTracked.align (this->core);
+        movedToNewTri = true;
       }
     }
+    return movedToNewTri;
   }
+
+  void updateInterpolatedNormal(float now_s){
+    glm::vec3 finalNormal = this->core->getDirUp ();
+    this->mni->set (finalNormal, now_s);
+  }
+
 protected:
   //* triangle mesh we're operating on */
   terrTriDomain *ttd;
 
 //** location / orientation of the MOB being managed */
   posRot *core;
+
+//** independent normal (optional) */
+  mobNormalInterpolator *mni = NULL;
 
 //* known tri being tracked */
   terrTriPlus tTracked;

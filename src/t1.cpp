@@ -1,7 +1,7 @@
 #include <vector>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/closest_point.hpp>
-
+#include <glm/vec3.hpp>
 #include "myGl.h"
 #include "t1.h"
 #include "outliner.hpp"
@@ -153,6 +153,7 @@ void t1::startup(instMan* im){
 t1::t1(terrTriDomain* ttd, glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, glm::vec3 rgbOuter, glm::vec3 rgbInner,
        glm::vec3 rgbOuterSelected,
        glm::vec3 rgbInnerSelected) : core (pos, dirFwd, dirUp), ttt (ttd, &this->core){
+  this->ttt.setMobNormalInterpolator (&this->coreNorm);
   this->rgbOuter = rgbOuter;
   this->rgbInner = rgbInner;
   this->rgbOuterSelected = rgbOuterSelected;
@@ -161,9 +162,9 @@ t1::t1(terrTriDomain* ttd, glm::vec3& pos, glm::vec3& dirFwd, glm::vec3& dirUp, 
                                         glm::vec3 (0, 1, 0));
 }
 
-void t1::render(const glm::mat4& proj, bool selected){
-  glm::mat4 projT = proj * this->core.model2world ();
-  double now_s = getTime ();
+void t1::render(const glm::mat4& proj, bool selected, float now_s){
+  glm::vec3 interpolatedNormal = this->coreNorm.getNormal (now_s);
+  glm::mat4 projT = proj * this->core.model2world (interpolatedNormal);
 
   float phi = now_s * M_PI * 0.3 * 0;
   this->lastTurretGunRot = glm::rotate (glm::mat4 (1.0f), phi,
@@ -233,6 +234,7 @@ void t1::giveInput(fpvInput inp){
   float angSpeed = 0;
   const float speedMax = 10.0f;
   const float angSpeedMax = 90.0f * M_PI / 180.0f;
+  float now_s = inp.time_s;
 
   if (inp.key_forw) speed += speedMax;
   if (inp.key_backw) speed -= speedMax;
@@ -244,13 +246,17 @@ void t1::giveInput(fpvInput inp){
 
 // === half movement pre-rotation ===
 //  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
-  this->ttt.track (forw);
+  bool triChanged = this->ttt.track (forw);
 // === rotation ===
   this->core.rotate (ang, /*pitch*/0, /*roll*/0);// TODO: make 1-arg variant
 
 // === half movement post-rotation ===
 //  this->core.move (forw, /*up*/0.0f, /*lat*/0.0f);// TODO: make 1-arg variant
-  this->ttt.track (forw);
+  triChanged |= this->ttt.track (forw);
+
+  if (triChanged){
+    this->ttt.updateInterpolatedNormal(now_s);
+  }
 }
 
 bool t1::getSelAttempt(glm::vec3& orig, glm::vec3& dir){
@@ -264,6 +270,8 @@ glm::mat4 t1::getCameraView(){
 
 void t1::drop(){
   this->ttt.drop ();
+  glm::vec3 settledDirUp = this->core.getDirUp ();
+  this->coreNorm.reset (settledDirUp);
 }
 
 const posRot& t1::getPosRot() const{
