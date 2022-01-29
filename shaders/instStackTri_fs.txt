@@ -1,0 +1,7 @@
+#version 300 es
+precision mediump float;
+in vec3 rgbv;
+out vec4 fragmentColor;
+void main(void) {
+     fragmentColor = vec4(rgbv, 1.0f);
+}

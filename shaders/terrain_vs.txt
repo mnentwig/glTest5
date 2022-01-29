@@ -1,0 +1,25 @@
+#version 300 es
+layout (location = 0) in vec3 coord3d;
+layout (location = 1) in vec3 rgb;
+layout (location = 2) in vec4 mvp_col0;
+layout (location = 3) in vec4 mvp_col1;
+layout (location = 4) in vec4 mvp_col2;
+layout (location = 5) in vec4 mvp_col3;
+layout (location = 6) in vec3 camera;
+layout (location = 7) in float distFactor;
+out vec3 rgbv;
+void main(void) {
+     mat4 mvp2;
+     mvp2[0] = mvp_col0;
+     mvp2[1] = mvp_col1;
+     mvp2[2] = mvp_col2;
+     mvp2[3] = mvp_col3;
+     vec4 pos = mvp2 * vec4(coord3d, 1.0);
+     gl_Position = pos;
+     vec3 a = camera-coord3d;
+	 float distSq = (a.x*a.x + a.y*a.y + a.z*a.z)*distFactor;
+	 distSq *= distSq;
+	 distSq *= distSq;
+	 float depth = clamp(1.0f-distSq, 0.0f, 1.0f); 
+     rgbv = rgb*depth;
+}
