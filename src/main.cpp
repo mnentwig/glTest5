@@ -51,6 +51,9 @@ int main(void){
   while (true) {
     const engine::preDrawState* pds = e.preDraw();
     if (pds->windowClose)break;
+
+    if (e.testKeycodePressEvt('A'))
+      break;
     e.beginDraw();
 
     glm::vec3 eye(0, 5, 0);
@@ -67,7 +70,6 @@ int main(void){
     float phi = pds->time_s * 2.0*M_PI/4;
 
     glm::mat4 rot = glm::rotate (glm::mat4 (1.0f), phi, glm::vec3(0, 1, 0));
-
 
     for (float x = -10; x <= 10; ++x){
       for (float z = -20; z <= 10; ++z){

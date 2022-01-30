@@ -9,13 +9,15 @@
 //#define WINDOWED
 //#define ENABLE_RAW_MOUSE
 
+#define SCANCODE_MB_FIRST (GLFW_KEY_LAST + 1) // first scancode used for mouse buttons
+
 namespace engine {
   engine::engine(){
   }
 
   static std::map<GLFWwindow*, engine*> window2engine;
 
-  /*declared as static!*/void engine::window_size_callback(GLFWwindow* window, int width, int height){
+  void engine::window_size_callback(GLFWwindow* window, int width, int height){
     engine *e = window2engine[window];
     e->screenWidth = width;
     e->screenHeight = height;
@@ -24,30 +26,37 @@ namespace engine {
   }
 
 // triggered by glfwPollEvents() in PRE_DRAW state
-  /*declared as static!*/void engine::cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
+  void engine::cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
     engine *e = window2engine[window];
     e->pdsCurr.mouseX = xpos;
     e->pdsCurr.mouseY = ypos;
   }
 
-  /*declared as static!*/void engine::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
-    switch (button) {
-      case GLFW_MOUSE_BUTTON_LEFT:
-        break;
-      case GLFW_MOUSE_BUTTON_RIGHT:
-        break;
-      default:
-        return;
-    }
-
+  void engine::keyButtonCallback(int keycode, int action){
+    std::cout << keycode << " " << action << std::endl;
     switch (action) {
       case GLFW_PRESS:
+        this->keycodeDeltaDown.emplace (keycode);
+        this->keycodeIsDown.emplace (keycode);
         break;
       case GLFW_RELEASE:
+        this->keycodeDeltaUp.emplace (keycode);
+        this->keycodeIsDown.erase (keycode);
         break;
-      default:
-        return;
+      default: // GLFW_REPEAT
+        break;
     }
+  }
+
+  void engine::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+    int scancode = button - GLFW_MOUSE_BUTTON_1 + SCANCODE_MB_FIRST;
+    engine *e = window2engine[window];
+    e->keyButtonCallback (button, action);
+  }
+
+  void engine::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+    engine *e = window2engine[window];
+    e->keyButtonCallback (key, action);
   }
 
   void engine::startup(){
@@ -92,6 +101,7 @@ namespace engine {
     glfwSetWindowSizeCallback (this->window, window_size_callback);
     glfwSetCursorPosCallback (this->window, cursor_position_callback);
     glfwSetMouseButtonCallback (this->window, mouse_button_callback);
+    glfwSetKeyCallback (this->window, key_callback);
     glfwSetInputMode (window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 #ifdef ENABLE_RAW_MOUSE
@@ -112,12 +122,13 @@ namespace engine {
     assert(this->state == READY);
     this->state = PRE_DRAW;
 
-    // === fire callbacks ===
-    glfwPollEvents ();
+    this->keycodeDeltaUp.clear ();
+    this->keycodeDeltaDown.clear ();
+    glfwPollEvents ();// invokes callbacks
 
-    // === calculate deltas ===
+// === calculate deltas ===
     this->pdsCurr.time_s = glfwGetTime ();
-    if (this->pdsCurr.frame > 0){
+    if (this->pdsCurr.frame > 0) {
       this->pdsCurr.deltaTime_s = this->pdsCurr.time_s - this->pdsPrev.time_s;
       this->pdsCurr.deltaMouseX = this->pdsCurr.mouseX - this->pdsPrev.mouseX;
       this->pdsCurr.deltaMouseY = this->pdsCurr.mouseY - this->pdsPrev.mouseY;
@@ -128,6 +139,18 @@ namespace engine {
     this->pdsCurr.windowClose = glfwWindowShouldClose (this->window);
 
     return &this->pdsCurr;
+  }
+
+  bool engine::testKeycodePressed(int keycode){
+    return this->keycodeIsDown.find (keycode) != this->keycodeIsDown.end ();
+  }
+
+  bool engine::testKeycodePressEvt(int keycode){
+    return this->keycodeDeltaDown.find (keycode) != this->keycodeDeltaDown.end ();
+  }
+
+  bool engine::testKeycodeReleaseEvt(int keycode){
+    return this->keycodeDeltaUp.find (keycode) != this->keycodeDeltaUp.end ();
   }
 
   void engine::beginDraw(){
