@@ -30,11 +30,16 @@ DEPEXTR_FLAGS = -MMD -MF $(@:.o=.d)
 main: 	$(OBJECTS_USER) $(OBJECTS_ENGINE)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS_RASPI)
 
-build/%.o: src/%.cpp
+build:
+	mkdir build
+buildEngine:
+	mkdir buildEngine
+	
+build/%.o: src/%.cpp build
 	@echo "building user target '$@'"
 	$(CC) $(CFLAGS) -c -o $@ $< $(DEPEXTR_FLAGS)
 
-buildEngine/%.o: srcEngine/%.cpp
+buildEngine/%.o: srcEngine/%.cpp buildEngine
 	@echo "building engine target '$@'"
 	$(CC) $(CFLAGS) -c -o $@ $< $(DEPEXTR_FLAGS)
 
