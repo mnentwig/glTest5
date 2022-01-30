@@ -5,9 +5,9 @@
 # $@		current make target (file that invokes the rule)
 
 # note: Conventionally the engine would be .so/.a/.dll, this approach works with individual 
-# object files and is intended to be somewhat faster
+# object files, somewhat less complex in debugging
 objs_user := main.o
-objs_engine := instMan.o instStackTriInst.o myGl.o explosible.o explTraj.o
+objs_engine := engine.o instMan.o instStackTriInst.o explosible.o explTraj.o
 LIBS_RASPI = -L/usr/lib/aarch64-linux-gnu -lGL -lglfw
 CC := g++
 CFLAGS := -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -g -O3
