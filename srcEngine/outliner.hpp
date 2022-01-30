@@ -9,9 +9,6 @@
 class outliner {
 protected:
   static void calcOffsetIntersection(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2, glm::vec2 n01, glm::vec2 n12, float width, glm::vec2& outIntersection){
-    glm::vec3 delta1(1, 2, 3);
-    glm::vec3 delta2(4, 5, 6);
-    glm::vec3 tmp = glm::cross (delta1, delta2);
     glm::vec2 v0a = v0 + width * n01;
     glm::vec2 v1a = v1 + width * n01;
     glm::vec2 v1b = v1 + width * n12;

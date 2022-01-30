@@ -2,14 +2,14 @@
 #include <cmath>
 #include <stdlib.h>
 #include <vector>
-#include "instMan.h"
-#include "explosible.h"
+#include "../srcEngine/instMan.h"
+#include "../srcEngine/explosible.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/norm.hpp>
 
-#include "allMyGlIncludes.h"
+#include "../srcEngine/allMyGlIncludes.h"
 
 static GLuint WIDTH = 800;
 static GLuint HEIGHT = 600;
@@ -197,6 +197,7 @@ int main(void){
     glfwSwapBuffers (window);
 #endif
   }
+  im.shutdown();
   glfwTerminate ();
   std::cout << "main Done" << std::endl;
   return EXIT_SUCCESS;
