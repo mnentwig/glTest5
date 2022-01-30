@@ -172,13 +172,17 @@ int main(void){
                                        1000.0f) * view;
 
     im.startFrame ();
-
     glm::vec3 rgbOuter(0, 1, 0);
-    glm::vec3 rgbInner(0, 0, 0);
-    for (float x = -100; x <= 100; ++x){
-      for (float z = -100; z <= 10; ++z){
+    glm::vec3 rgbInner(0.1, 0.1, 0.1);
+    float phi = glfwGetTime() * 2.0*M_PI/4;
+
+    glm::mat4 rot = glm::rotate (glm::mat4 (1.0f), phi, glm::vec3(0, 1, 0));
+
+
+    for (float x = -10; x <= 10; ++x){
+      for (float z = -20; z <= 10; ++z){
         //glm::mat4 v = glm::inverse (glm::lookAt (glm::vec3 (0, 0, 0), this->dirFwd, dirUp));
-        glm::mat4 v = glm::translate (glm::mat4 (1.0f), glm::vec3(x, 0, z));//; * v;
+        glm::mat4 v = glm::translate (glm::mat4 (1.0f), glm::vec3(x, 0, z)) * rot;
         glm::mat4 projT = proj * v;
         testcube->render(projT, rgbOuter, rgbInner);
       }

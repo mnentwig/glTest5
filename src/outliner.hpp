@@ -1,5 +1,6 @@
 #pragma once
 #define GLM_ENABLE_EXPERIMENTAL
+#include <glm/vec3.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/norm.hpp>
 #include <vector>
@@ -8,6 +9,9 @@
 class outliner {
 protected:
   static void calcOffsetIntersection(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2, glm::vec2 n01, glm::vec2 n12, float width, glm::vec2& outIntersection){
+    glm::vec3 delta1(1, 2, 3);
+    glm::vec3 delta2(4, 5, 6);
+    glm::vec3 tmp = glm::cross (delta1, delta2);
     glm::vec2 v0a = v0 + width * n01;
     glm::vec2 v1a = v1 + width * n01;
     glm::vec2 v1b = v1 + width * n12;
@@ -67,6 +71,9 @@ protected:
       glm::vec3 v2 = vertices[(ix + 1 + nVertices) % nVertices];
 
 // === normal of triangle ===
+      //glm::vec3 delta1 = v1 - v0;
+      //glm::vec3 delta2 = v2 - v1;
+      //glm::vec3 tmp = glm::cross (delta1, delta2);
       glm::vec3 triN = glm::normalize (glm::cross (v1 - v0, v2 - v1));
 
 // === desired normal (eliminate z => 0,0,1) ===
