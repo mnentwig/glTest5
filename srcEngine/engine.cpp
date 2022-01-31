@@ -1,5 +1,4 @@
 #include "allMyGlIncludes.h"
-#include <iostream>
 #include <map>
 #include <cassert>
 #include "engine.h"
@@ -22,7 +21,6 @@ engine::engine(){
     e->screenWidth = width;
     e->screenHeight = height;
     glViewport (0, 0, width, height);
-    std::cout << width << " " << height << std::endl;
   }
 
 // triggered by glfwPollEvents() in PRE_DRAW state
@@ -33,7 +31,6 @@ engine::engine(){
   }
 
   void engine::keyButtonCallback(int keycode, int action){
-    std::cout << keycode << " " << action << std::endl;
     switch (action) {
       case GLFW_PRESS:
         this->keycodeDeltaDown.emplace (keycode);

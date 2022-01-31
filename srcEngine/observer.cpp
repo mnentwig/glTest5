@@ -1,8 +1,7 @@
 #include "observer.h"
-#include "glmPrint.hpp"
+//#include "glmPrint.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/ext/quaternion_trigonometric.hpp>
-#include <iostream> // !!!!!
 namespace engine {
 
 observer::observer(engine *e) {
@@ -11,13 +10,10 @@ observer::observer(engine *e) {
 	this->dPitchDt_radps = defrate_radps;
 	this->dYawDt_radps = defrate_radps;
 	this->dRollDt_radps = defrate_radps;
+	this->movementSpeed = 5.0;
 
-	glm::vec3 eye(0, 5, 0);
-    glm::vec3 far(0, 5, -1);
-    glm::vec3 up(0, 1, 0);
-
-	this->viewMatrix = glm::lookAt (eye, far, up);
-	this->viewQuat = glm::quat_cast(this->viewMatrix);
+	this->viewQuat = glm::quat(1, 0, 0, 0);
+	this->viewMatrix = glm::mat4_cast(this->viewQuat);
 }
 
 const glm::mat4x4& observer::getView() const {
@@ -45,6 +41,7 @@ void observer::setMovementKeys(int forwards, int backwards, int left,
 }
 
 void observer::ctrlInput(const preDrawState *pds) {
+	// === rotation (apply on viewQuat) ===
 	float dPitch = 0;
 	float dYaw = 0;
 	float dRoll = 0;
@@ -70,6 +67,7 @@ void observer::ctrlInput(const preDrawState *pds) {
 		this->viewQuat = deltaRot * this->viewQuat;
 	}
 
+	// === movement (apply on pos) ===
 	float deltaX = 0;
 	deltaX += this->e->testKeycodePressed(this->keycodeRight) ? 1 : 0;
 	deltaX += this->e->testKeycodePressed(this->keycodeLeft) ? -1 : 0;
@@ -79,18 +77,11 @@ void observer::ctrlInput(const preDrawState *pds) {
 	float deltaZ = 0;
 	deltaZ += this->e->testKeycodePressed(this->keycodeForwards) ? -1 : 0;
 	deltaZ += this->e->testKeycodePressed(this->keycodeBackwards) ? 1 : 0;
-
 	glm::vec3 delta(deltaX, deltaY, deltaZ);
-
-	glm::vec3 eye(0, 5, 0);
-//	this->viewMatrix = glm::translate(glm::mat4(), -eye) * glm::mat4_cast(this->viewQuat);
-	glmPrint(this->viewMatrix);
-	glmPrint(glm::mat3_cast(this->viewQuat));
-	glmPrint(glm::translate(glm::mat4_cast(this->viewQuat), -eye));
-
+	delta *= this->movementSpeed * pds->deltaTime_s;
 	this->pos += delta * this->viewQuat;
 
+	// === update viewMatrix ===
 	this->viewMatrix = glm::translate(glm::mat4_cast(this->viewQuat), -this->pos);
-
 }
 } // namespace
