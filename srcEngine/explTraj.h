@@ -1,7 +1,8 @@
 #pragma once
+#include <vector>
+#include <glm/fwd.hpp> // Eclipse CODAN needs this
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
-#include <vector>
 class explTraj{
  public:
   explTraj();

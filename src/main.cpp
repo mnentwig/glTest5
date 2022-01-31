@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "../srcEngine/engine.h"
+#include "../srcEngine/observer.h"
 #include "../srcEngine/instMan.h"
 #include "../srcEngine/explosible.h"
 
@@ -47,19 +48,22 @@ int main(void){
   e.startup();
 
   explosible* testcube = generateTestcube(0.8f, 0.05f, &im);
-
+  engine::observer o(&e);
   while (true) {
     const engine::preDrawState* pds = e.preDraw();
     if (pds->windowClose)break;
 
     if (e.testKeycodePressEvt('A'))
       break;
+    o.ctrlInput(pds);
+
     e.beginDraw();
 
     glm::vec3 eye(0, 5, 0);
     glm::vec3 far(0, 5, -1);
     glm::vec3 up(0, 1, 0);
-    glm::mat4 view = glm::lookAt (eye, far, up);
+    const glm::mat4 view = o.getView();
+    		//glm::lookAt (eye, far, up);
 
     glm::mat4 proj = glm::perspective (45.0f, 1.0f * e.screenWidth / e.screenHeight, 0.01f,
                                        1000.0f) * view;

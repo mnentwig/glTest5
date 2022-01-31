@@ -12,7 +12,7 @@
 #define SCANCODE_MB_FIRST (GLFW_KEY_LAST + 1) // first scancode used for mouse buttons
 
 namespace engine {
-  engine::engine(){
+engine::engine(){
   }
 
   static std::map<GLFWwindow*, engine*> window2engine;

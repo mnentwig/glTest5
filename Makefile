@@ -7,7 +7,7 @@
 # note: Conventionally the engine would be .so/.a/.dll, this approach works with individual 
 # object files, somewhat less complex in debugging
 objs_user := main.o
-objs_engine := engine.o instMan.o instStackTriInst.o explosible.o explTraj.o
+objs_engine := engine.o instMan.o instStackTriInst.o explosible.o explTraj.o observer.o
 LIBS_RASPI = -L/usr/lib/aarch64-linux-gnu -lGL -lglfw
 CC := g++
 CFLAGS := -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -g -O3
@@ -29,18 +29,15 @@ DEPEXTR_FLAGS = -MMD -MF $(@:.o=.d)
 
 main: 	$(OBJECTS_USER) $(OBJECTS_ENGINE)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS_RASPI)
-
-build:
-	mkdir build
-buildEngine:
-	mkdir buildEngine
 	
-build/%.o: src/%.cpp build
+build/%.o: src/%.cpp
 	@echo "building user target '$@'"
+	@mkdir -p $(@D)        
 	$(CC) $(CFLAGS) -c -o $@ $< $(DEPEXTR_FLAGS)
 
-buildEngine/%.o: srcEngine/%.cpp buildEngine
+buildEngine/%.o: srcEngine/%.cpp
 	@echo "building engine target '$@'"
+	@mkdir -p $(@D)        
 	$(CC) $(CFLAGS) -c -o $@ $< $(DEPEXTR_FLAGS)
 
 clean:
