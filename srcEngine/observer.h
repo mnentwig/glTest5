@@ -38,6 +38,7 @@ protected:
 	float dYawDt_radps;
 	float dRollDt_radps;
 	float movementSpeed;
+	float mouseSens=0.1;
 	const glm::vec3 vecRight = glm::vec3(1, 0, 0);
 	const glm::vec3 vecUp = glm::vec3(0, 1, 0);
 	const glm::vec3 vecForw = glm::vec3(0, 0, -1);

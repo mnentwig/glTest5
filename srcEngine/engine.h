@@ -1,5 +1,7 @@
 #pragma once
 #include <set>
+#include "fpsEstimator.hpp"
+
 class GLFWwindow;
 namespace engine {
   enum state_e {
@@ -9,16 +11,16 @@ namespace engine {
   class preDrawState {
   public:
     float time_s;
-    float deltaTime_s;
+    float deltaTime_s = 0;
 
     float mouseX;
-    float deltaMouseX;
+    float deltaMouseX = 0;
     float mouseY;
-    float deltaMouseY;
+    float deltaMouseY = 0;
 
     bool windowClose;
 
-    long frame;
+    long frame = 0;
   };
 
   class engine {
@@ -38,6 +40,7 @@ namespace engine {
     bool testKeycodePressEvt(int keycode);
     bool testKeycodeReleaseEvt(int keycode);
 
+    float fps;
     protected:
     state_e state = NEW;
     GLFWwindow *window = NULL;
@@ -52,6 +55,8 @@ namespace engine {
     std::set<int> keycodeDeltaDown;
     std::set<int> keycodeDeltaUp;
     std::set<int> keycodeIsDown;
+
+    fpsEstimator fpsEst = fpsEstimator(1.0f);
   };
 // class
 }// namespace

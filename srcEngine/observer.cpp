@@ -55,6 +55,8 @@ void observer::ctrlInput(const preDrawState *pds) {
 	dPitch *= this->dPitchDt_radps*pds->deltaTime_s;
 	dYaw *= this->dYawDt_radps*pds->deltaTime_s;
 	dRoll *= this->dRollDt_radps*pds->deltaTime_s;
+	dPitch += mouseSens * glm::radians(pds->deltaMouseY);
+	dYaw += mouseSens * glm::radians(pds->deltaMouseX);
 
 	glm::vec3 axis(0);
 	axis += dPitch * this->vecRight;
