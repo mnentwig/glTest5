@@ -2,6 +2,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <vector>
+#include <GLFW/glfw3.h>
 #include "../srcEngine/engine.h"
 #include "../srcEngine/observer.h"
 #include "../srcEngine/instMan.h"
@@ -49,6 +50,7 @@ int main(void){
 
   explosible* testcube = generateTestcube(0.8f, 0.05f, &im);
   engine::observer o(&e);
+  o.setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
   while (true) {
     const engine::preDrawState* pds = e.preDraw();
     if (pds->windowClose)break;

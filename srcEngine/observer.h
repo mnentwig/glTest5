@@ -11,10 +11,10 @@ class observer {
 public:
 	observer(engine *e);
 	void ctrlInput(const preDrawState *pds);
-	void setPitchYawRollKeys(char pitchDown, char pitchUp, char YawLeft,
-			char YawRight, char rollCcw, char rollCw);
-	void setMovementKeys(char forwards, char backwards, char left, char right,
-			char up, char down);
+	void setPitchYawRollKeys(int pitchDown, int pitchUp, int YawLeft,
+			int YawRight, int rollCcw, int rollCw);
+	void setMovementKeys(int forwards, int backwards, int left, int right,
+			int up, int down);
 	const glm::mat4x4& getView() const;
 
 protected:
