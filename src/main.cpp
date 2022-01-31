@@ -51,12 +51,10 @@ int main(void){
   explosible* testcube = generateTestcube(0.8f, 0.05f, &im);
   engine::observer o(&e);
   o.setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
+  o.setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
   while (true) {
     const engine::preDrawState* pds = e.preDraw();
     if (pds->windowClose)break;
-
-    if (e.testKeycodePressEvt('A'))
-      break;
     o.ctrlInput(pds);
 
     e.beginDraw();
@@ -77,8 +75,8 @@ int main(void){
 
     glm::mat4 rot = glm::rotate (glm::mat4 (1.0f), phi, glm::vec3(0, 1, 0));
 
-    for (float x = -10; x <= 10; ++x){
-      for (float z = -20; z <= 10; ++z){
+    for (float x = 10; x <= 10; ++x){
+      for (float z = -20; z <= -10; ++z){
         //glm::mat4 v = glm::inverse (glm::lookAt (glm::vec3 (0, 0, 0), this->dirFwd, dirUp));
         glm::mat4 v = glm::translate (glm::mat4 (1.0f), glm::vec3(x, 0, z)) * rot;
         glm::mat4 projT = proj * v;

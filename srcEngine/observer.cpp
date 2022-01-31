@@ -48,12 +48,13 @@ void observer::ctrlInput(const preDrawState *pds) {
 	float dPitch = 0;
 	float dYaw = 0;
 	float dRoll = 0;
-	dPitch += this->e->testKeycodePressed(this->keycodePitchDown) ? -1 : 0;
-	dPitch += this->e->testKeycodePressed(this->keycodePitchUp) ? 1 : 0;
-	dYaw += this->e->testKeycodePressed(this->keycodeYawRight) ? -1 : 0;
-	dYaw += this->e->testKeycodePressed(this->keycodeYawLeft) ? 1 : 0;
-	dRoll += this->e->testKeycodePressed(this->keycodeRollCcw) ? -1 : 0;
-	dRoll += this->e->testKeycodePressed(this->keycodeRollCw) ? 1 : 0;
+	// positive angle turns CCW
+	dPitch += this->e->testKeycodePressed(this->keycodePitchDown) ? 1 : 0;
+	dPitch += this->e->testKeycodePressed(this->keycodePitchUp) ? -1 : 0;
+	dYaw += this->e->testKeycodePressed(this->keycodeYawRight) ? 1 : 0;
+	dYaw += this->e->testKeycodePressed(this->keycodeYawLeft) ? -1 : 0;
+	dRoll += this->e->testKeycodePressed(this->keycodeRollCcw) ? 1 : 0;
+	dRoll += this->e->testKeycodePressed(this->keycodeRollCw) ? -1 : 0;
 	dPitch *= this->dPitchDt_radps*pds->deltaTime_s;
 	dYaw *= this->dYawDt_radps*pds->deltaTime_s;
 	dRoll *= this->dRollDt_radps*pds->deltaTime_s;
@@ -66,14 +67,30 @@ void observer::ctrlInput(const preDrawState *pds) {
 	if (len > 1e-7f){
 		axis *= 1.0f/len;
 		glm::quat deltaRot = angleAxis(/*angle*/len, axis);
-		this->viewQuat = this->viewQuat * deltaRot;
+		this->viewQuat = deltaRot * this->viewQuat;
 	}
+
+	float deltaX = 0;
+	deltaX += this->e->testKeycodePressed(this->keycodeRight) ? 1 : 0;
+	deltaX += this->e->testKeycodePressed(this->keycodeLeft) ? -1 : 0;
+	float deltaY = 0;
+	deltaY += this->e->testKeycodePressed(this->keycodeUp) ? 1 : 0;
+	deltaY += this->e->testKeycodePressed(this->keycodeDown) ? -1 : 0;
+	float deltaZ = 0;
+	deltaZ += this->e->testKeycodePressed(this->keycodeForwards) ? -1 : 0;
+	deltaZ += this->e->testKeycodePressed(this->keycodeBackwards) ? 1 : 0;
+
+	glm::vec3 delta(deltaX, deltaY, deltaZ);
 
 	glm::vec3 eye(0, 5, 0);
 //	this->viewMatrix = glm::translate(glm::mat4(), -eye) * glm::mat4_cast(this->viewQuat);
 	glmPrint(this->viewMatrix);
 	glmPrint(glm::mat3_cast(this->viewQuat));
 	glmPrint(glm::translate(glm::mat4_cast(this->viewQuat), -eye));
-	this->viewMatrix = glm::translate(glm::mat4_cast(this->viewQuat), -eye);
+
+	this->pos += delta * this->viewQuat;
+
+	this->viewMatrix = glm::translate(glm::mat4_cast(this->viewQuat), -this->pos);
+
 }
 } // namespace

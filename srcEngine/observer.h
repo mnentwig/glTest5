@@ -21,6 +21,7 @@ protected:
 	engine *e;
 	glm::quat viewQuat;
 	glm::mat4x4 viewMatrix;
+	glm::vec3 pos = glm::vec3(0, 0, 0);
 	int keycodePitchDown = 0;
 	int keycodePitchUp = 0;
 	int keycodeYawLeft = 0;
