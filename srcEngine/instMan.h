@@ -6,6 +6,8 @@ class instStackTriInst;
 class instMan{
  public:
   instMan();
+  instMan(const instMan&) = delete; // prevent copy
+  instMan& operator =(const instMan&) = delete; // prevent copy
   ~instMan();
   unsigned int openHandle(bool isOverlay = false);
   void startFrame();

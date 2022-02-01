@@ -6,6 +6,9 @@
 class explTraj{
  public:
   explTraj();
+  explTraj(const explTraj&) = delete; // prevent copy
+  explTraj& operator =(const explTraj&) = delete; // prevent copy
+
   void registerFragment(glm::vec3 dirNorm, float speed, glm::vec3 rotAxis, float rotAngSpeed_radPerSecond);
   glm::vec3 getDeltaPos(unsigned int fragIx) const;
   glm::mat4 getRotation(unsigned int fragIx) const;

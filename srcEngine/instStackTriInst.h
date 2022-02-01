@@ -30,6 +30,8 @@ class instStackTriInst {
   bool isShutdown;
  public:
   instStackTriInst();
+  instStackTriInst(const instStackTriInst&) = delete; // prevent copy
+  instStackTriInst& operator =(const instStackTriInst&) = delete; // prevent copy
   ~instStackTriInst();
   void finalize();
   void reset();

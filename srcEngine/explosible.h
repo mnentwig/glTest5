@@ -18,6 +18,8 @@ class explosible {
 		  const explTraj &traj, const glm::vec3 &rgbOuter, const glm::vec3 &rgbInner);
   void explode(explTraj* traj, glm::vec3 impact, float speed, float angSpeed);
   bool lineIntersectCheck(const glm::mat4& proj, const glm::vec3& pos, const glm::vec3& delta, float& distLimit) const;
+  explosible(const explosible&) = delete; // prevent copy
+  explosible& operator =(const explosible&) = delete; // prevent copy
  protected:
   instMan* im;
   unsigned int imHandle;

@@ -41,6 +41,8 @@ namespace engine {
     bool testKeycodeReleaseEvt(int keycode);
 
     float fps;
+    engine(const engine&) = delete; // prevent copy
+    engine& operator =(const engine&) = delete; // prevent copy
     protected:
     state_e state = NEW;
     GLFWwindow *window = NULL;

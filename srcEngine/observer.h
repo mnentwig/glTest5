@@ -10,6 +10,9 @@ namespace engine {
 class observer {
 public:
 	observer(engine *e);
+    observer(const observer&) = delete; // prevent copy
+    observer& operator =(const observer&) = delete; // prevent copy
+
 	void ctrlInput(const preDrawState *pds);
 	void setPitchYawRollKeys(int pitchDown, int pitchUp, int YawLeft,
 			int YawRight, int rollCcw, int rollCw);
