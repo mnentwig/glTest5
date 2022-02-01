@@ -20,8 +20,7 @@ const glm::mat4x4& observer::getView() const {
 	return this->viewMatrix;
 }
 
-void observer::setPitchYawRollKeys(int pitchDown, int pitchUp, int yawLeft,
-		int yawRight, int rollCcw, int rollCw) {
+void observer::setPitchYawRollKeys(int pitchDown, int pitchUp, int yawLeft, int yawRight, int rollCcw, int rollCw) {
 	this->keycodePitchDown = pitchDown;
 	this->keycodePitchUp = pitchUp;
 	this->keycodeYawLeft = yawLeft;
@@ -30,8 +29,7 @@ void observer::setPitchYawRollKeys(int pitchDown, int pitchUp, int yawLeft,
 	this->keycodeRollCw = rollCw;
 }
 
-void observer::setMovementKeys(int forwards, int backwards, int left,
-		int right, int up, int down) {
+void observer::setMovementKeys(int forwards, int backwards, int left, int right, int up, int down) {
 	this->keycodeForwards = forwards;
 	this->keycodeBackwards = backwards;
 	this->keycodeLeft = left;
@@ -40,7 +38,7 @@ void observer::setMovementKeys(int forwards, int backwards, int left,
 	this->keycodeDown = down;
 }
 
-void observer::ctrlInput(const preDrawState *pds) {
+void observer::ctrlInput(const mgeng::preDrawState *pds) {
 	// === rotation (apply on viewQuat) ===
 	float dPitch = 0;
 	float dYaw = 0;
@@ -52,19 +50,19 @@ void observer::ctrlInput(const preDrawState *pds) {
 	dYaw += this->e->testKeycodePressed(this->keycodeYawLeft) ? -1 : 0;
 	dRoll += this->e->testKeycodePressed(this->keycodeRollCcw) ? 1 : 0;
 	dRoll += this->e->testKeycodePressed(this->keycodeRollCw) ? -1 : 0;
-	dPitch *= this->dPitchDt_radps*pds->deltaTime_s;
-	dYaw *= this->dYawDt_radps*pds->deltaTime_s;
-	dRoll *= this->dRollDt_radps*pds->deltaTime_s;
+	dPitch *= this->dPitchDt_radps * pds->deltaTime_s;
+	dYaw *= this->dYawDt_radps * pds->deltaTime_s;
+	dRoll *= this->dRollDt_radps * pds->deltaTime_s;
 	dPitch += mouseSens * glm::radians(pds->deltaMouseY);
 	dYaw += mouseSens * glm::radians(pds->deltaMouseX);
 
 	glm::vec3 axis(0);
 	axis += dPitch * this->vecRight;
-	axis += dYaw*this->vecUp;
-	axis += dRoll*this->vecForw;
+	axis += dYaw * this->vecUp;
+	axis += dRoll * this->vecForw;
 	float len = glm::length(axis);
-	if (len > 1e-7f){
-		axis *= 1.0f/len;
+	if (len > 1e-7f) {
+		axis *= 1.0f / len;
 		glm::quat deltaRot = angleAxis(/*angle*/len, axis);
 		this->viewQuat = deltaRot * this->viewQuat;
 	}
@@ -87,3 +85,29 @@ void observer::ctrlInput(const preDrawState *pds) {
 	this->viewMatrix = glm::translate(glm::mat4_cast(this->viewQuat), -this->pos);
 }
 } // namespace
+
+// ==============================================================
+// == API
+// ==============================================================
+mgeng::observer::observer(mgeng::root *root) {
+	this->obs = new engine::observer(root->eng);
+}
+
+mgeng::observer::~observer() {
+	delete this->obs;
+}
+
+void mgeng::observer::setPitchYawRollKeys(int pitchDown, int pitchUp, int YawLeft, int YawRight, int rollCcw, int rollCw) {
+	this->obs->setPitchYawRollKeys(pitchDown, pitchUp, YawLeft, YawRight, rollCcw, rollCw);
+}
+void mgeng::observer::setMovementKeys(int forwards, int backwards, int left, int right, int up, int down) {
+	this->obs->setMovementKeys(forwards, backwards, left, right, up, down);
+}
+
+void mgeng::observer::ctrlInput(const mgeng::preDrawState *pds) {
+	this->obs->ctrlInput(pds);
+}
+
+const glm::mat4x4& mgeng::observer::getView() const {
+	return this->obs->getView();
+}

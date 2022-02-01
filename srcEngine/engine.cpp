@@ -72,7 +72,7 @@ void engine::startup() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 #ifdef SINGLE_BUFFER
-      glfwWindowHint ( GLFW_DOUBLEBUFFER, GL_FALSE);
+	glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE);
 #else
 	glfwWindowHint( GLFW_DOUBLEBUFFER, GL_TRUE);
 #endif
@@ -92,8 +92,7 @@ void engine::startup() {
 	glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
 	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-	this->window = glfwCreateWindow(this->screenWidth, this->screenHeight,
-	__FILE__, monitor, NULL);
+	this->window = glfwCreateWindow(this->screenWidth, this->screenHeight, __FILE__, monitor, NULL);
 #endif
 	window2engine[this->window] = this;
 	window_size_callback(this->window, this->screenWidth, this->screenHeight);
@@ -131,7 +130,7 @@ void engine::startup() {
 	printf("GL_RENDERER : %s\n", glGetString(GL_RENDERER));
 }
 
-const preDrawState* engine::preDraw() {
+const mgeng::preDrawState* engine::preDraw() {
 	assert(this->state == READY);
 	this->state = PRE_DRAW;
 
@@ -188,7 +187,7 @@ void engine::endDraw() {
 	this->state = READY;
 // === show new image ===
 #ifdef SINGLE_BUFFER
-        glFlush ();
+	glFlush();
 #else
 	glfwSwapBuffers(this->window);
 #endif
@@ -200,3 +199,43 @@ void engine::shutdown() {
 	glfwTerminate();
 }
 } // namespace
+
+// ==============================================================
+// == API
+// ==============================================================
+mgeng::root::root(){
+	this->eng = new engine::engine();
+}
+
+mgeng::root::~root(){
+	delete this->eng;
+}
+
+void mgeng::root::beginDraw() {
+	this->eng->beginDraw();
+}
+
+void mgeng::root::endDraw() {
+	this->eng->endDraw();
+}
+
+const mgeng::preDrawState* mgeng::root::preDraw() {
+	return this->eng->preDraw();
+}
+
+void mgeng::root::startup() {
+	this->eng->startup();
+}
+
+void mgeng::root::getScreenWidthHeight(unsigned int& width, unsigned int& height){
+	width = this->eng->screenWidth;
+	height = this->eng->screenHeight;
+}
+
+void mgeng::root::shutdown() {
+	this->eng->shutdown();
+}
+
+void mgeng::root::getFps(float& fps){
+	fps = this->eng->fps;
+}

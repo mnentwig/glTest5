@@ -13,7 +13,7 @@ public:
     observer(const observer&) = delete; // prevent copy
     observer& operator =(const observer&) = delete; // prevent copy
 
-	void ctrlInput(const preDrawState *pds);
+	void ctrlInput(const mgeng::preDrawState *pds);
 	void setPitchYawRollKeys(int pitchDown, int pitchUp, int YawLeft,
 			int YawRight, int rollCcw, int rollCw);
 	void setMovementKeys(int forwards, int backwards, int left, int right,

@@ -3,10 +3,9 @@
 #include <stdlib.h>
 #include <vector>
 #include <GLFW/glfw3.h> // for keycodes
-#include "../srcEngine/engine.h"
-#include "../srcEngine/observer.h"
 #include "../srcEngine/instMan.h"
 #include "../srcEngine/explosible.h"
+#include "../srcEngine/API.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -44,23 +43,26 @@ int main(void) {
   assert(0);
 #endif
 
-	engine::engine e;
-	e.startup();
+  mgeng::root mgengRoot;
+	mgengRoot.startup();
 
 	explosible *testcube = generateTestcube(0.8f, 0.05f, &im);
-	engine::observer o(&e);
-	o.setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
-	o.setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
-	glm::mat4 persp = glm::perspective(45.0f, 1.0f * e.screenWidth / e.screenHeight, 0.01f, 1000.0f);
+	mgeng::observer* o = new mgeng::observer(&mgengRoot);
+	o->setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
+	o->setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
+	unsigned int screenWidth;
+	unsigned int screenHeight;
+	mgengRoot.getScreenWidthHeight(screenWidth, screenHeight);
+	glm::mat4 persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
 	float nextFpsTime = -1;
 	while (true) {
-		const engine::preDrawState *pds = e.preDraw();
+		const mgeng::preDrawState *pds = mgengRoot.preDraw();
 		if (pds->windowClose)
 			break;
-		o.ctrlInput(pds);
+		o->ctrlInput(pds);
 
-		e.beginDraw();
-		const glm::mat4 view = o.getView();
+		mgengRoot.beginDraw();
+		const glm::mat4 view = o->getView();
 
 		glm::mat4 proj = persp * view;
 
@@ -80,14 +82,16 @@ int main(void) {
 		}
 
 		im.endFrame();
-		e.endDraw();
+		mgengRoot.endDraw();
 		if (pds->time_s > nextFpsTime){
-			std::cout << e.fps << " fps\n";
+			float fps;
+			mgengRoot.getFps(fps);
+			std::cout << fps << " fps\n";
 			nextFpsTime = pds->time_s + 1.0;
 		}
 	}
 	im.shutdown();
-	e.shutdown();
+	mgengRoot.shutdown();
 	std::cout << "main Done" << std::endl;
 	return EXIT_SUCCESS;
 }

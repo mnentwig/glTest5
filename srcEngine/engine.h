@@ -1,6 +1,7 @@
 #pragma once
 #include <set>
 #include "fpsEstimator.hpp"
+#include "API.h"
 
 class GLFWwindow;
 namespace engine {
@@ -8,26 +9,14 @@ namespace engine {
     NEW, READY, PRE_DRAW, DRAW, SHUTDOWN
   };
 
-  class preDrawState {
-  public:
-    float time_s;
-    float deltaTime_s = 0;
-
-    float mouseX;
-    float deltaMouseX = 0;
-    float mouseY;
-    float deltaMouseY = 0;
-
-    bool windowClose;
-
-    long frame = 0;
-  };
 
   class engine {
   public:
     engine();
     void startup();
-    const preDrawState* preDraw();
+    engine(const engine&) = delete; // prevent copy
+    engine& operator =(const engine&) = delete; // prevent copy
+    const mgeng::preDrawState* preDraw();
     void beginDraw();
     void endDraw();
     void shutdown();
@@ -41,13 +30,11 @@ namespace engine {
     bool testKeycodeReleaseEvt(int keycode);
 
     float fps;
-    engine(const engine&) = delete; // prevent copy
-    engine& operator =(const engine&) = delete; // prevent copy
     protected:
     state_e state = NEW;
     GLFWwindow *window = NULL;
-    preDrawState pdsCurr;
-    preDrawState pdsPrev;
+    mgeng::preDrawState pdsCurr;
+    mgeng::preDrawState pdsPrev;
     static void window_size_callback(GLFWwindow* window, int width, int height);
     static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
     static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
