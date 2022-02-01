@@ -26,6 +26,77 @@ void blueprint::render(const glm::mat4 &proj, const std::vector<glm::vec3> &rgb)
 	this->im->renderInst(this->imHandle, proj, rgb);
 }
 
+blueprintHitscan::blueprintHitscan(instMan *im, unsigned int nCol) :
+		blueprint(im, nCol) {
+}
+
+void blueprintHitscan::addHitscanSurface(const std::vector<glm::vec3> vertices) {
+	this->hitscanSurfaces.push_back(vertices);
+
+	// === calculate center-of-gravity ===
+	glm::vec3 cog(0, 0, 0);
+	for (unsigned int ix = 0; ix < vertices.size(); ++ix) {
+		cog += vertices[ix];
+	}
+	cog /= (float) vertices.size();
+
+	// === create collision detect triangles ===
+	typedef struct {
+		glm::vec3 vertex;
+		float distToCenter;
+	} earClipVertex;
+
+	std::vector<earClipVertex> vList;
+	for (unsigned int ix = 0; ix < vertices.size(); ++ix) {
+		earClipVertex v;
+		v.vertex = vertices[ix];
+		v.distToCenter = glm::distance2(v.vertex, cog);
+		vList.push_back(v);
+	}
+
+	// === clip ears ===
+	while (vList.size() > 2) {
+		// === locate outermost vertex ===
+		int ixMax = 0;
+		for (unsigned int ix = 1; ix < vList.size(); ++ix)
+			if (vList[ix].distToCenter > vList[ixMax].distToCenter)
+				ixMax = ix;
+
+		// === get triangle where ixMax identifies the outermost point ===
+		int ixPrev = (ixMax - 1 + vList.size()) % vList.size();
+		int ixNext = (ixMax + 1) % vList.size();
+
+		// === add to collision detect triangles ===
+		collisionTri t;
+		t.p0 = vList[ixPrev].vertex;
+		t.p1 = vList[ixMax].vertex;
+		t.p2 = vList[ixNext].vertex;
+		this->collisionTriList.push_back(t);
+
+		// == clip ear ===
+		vList.erase(vList.begin() + ixMax);
+	}
+}
+
+static glm::vec3 matMul(const glm::mat4 &m, const glm::vec3 &v) {
+	return glm::vec3(m * glm::vec4(v, 1.0f));
+}
+
+float blueprintHitscan::lineIntersectAtDistance(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
+	float distMax = glm::length(lineDir);
+	float dBest = distMax + 1.234f;
+	for (unsigned int ix = 0; ix < this->collisionTriList.size(); ++ix) {
+		collisionTri t = this->collisionTriList[ix];
+		glm::vec2 isBary;
+		GLfloat d;
+		if (glm::intersectRayTriangle(lineOrig, lineDir, matMul(proj, t.p0), matMul(proj, t.p1), matMul(proj, t.p2), isBary, d)) {
+			if ((d >= 0) && (d < dBest))
+				dBest = d;
+		}
+	}
+	return dBest <= distMax ? dBest : NAN;
+}
+
 constexpr int ixColOutline = 0;
 constexpr int ixColFill = 1;
 /** One surface of an "explosible" object that may fly away, spinning wildly
@@ -45,6 +116,7 @@ public:
 
 	void close(std::vector<unsigned int> endIx) {
 		assert(!this->closed);
+		this->closed = true;
 		this->endIx = endIx;
 
 // === calculate center-of-gravity ===
@@ -53,44 +125,6 @@ public:
 			this->cog += (*this->vertices)[ix];
 		}
 		this->cog /= (float) this->vertices->size();
-		this->closed = true;
-
-// === create collision detect triangles ===
-		typedef struct {
-			glm::vec3 vertex;
-			float distToCenter;
-		} earClipVertex;
-
-		std::vector<earClipVertex> vList;
-		for (unsigned int ix = 0; ix < this->vertices->size(); ++ix) {
-			earClipVertex v;
-			v.vertex = (*this->vertices)[ix];
-			v.distToCenter = glm::distance2(v.vertex, this->cog);
-			vList.push_back(v);
-		}
-
-// === clip ears ===
-		while (vList.size() > 2) {
-// === locate outermost vertex ===
-			int ixMax = 0;
-			for (unsigned int ix = 1; ix < vList.size(); ++ix)
-				if (vList[ix].distToCenter > vList[ixMax].distToCenter)
-					ixMax = ix;
-
-// === get triangle where ixMax identifies the outermost point ===
-			int ixPrev = (ixMax - 1 + vList.size()) % vList.size();
-			int ixNext = (ixMax + 1) % vList.size();
-
-// === add to collision detect triangles ===
-			collisionTri t;
-			t.p0 = vList[ixPrev].vertex;
-			t.p1 = vList[ixMax].vertex;
-			t.p2 = vList[ixNext].vertex;
-			this->collisionTriList.push_back(t);
-
-// == clip ear ===
-			vList.erase(vList.begin() + ixMax);
-		}
 	}
 
 	/** returns (approximate?) center-of-gravity */
@@ -112,53 +146,16 @@ public:
 		return glm::normalize(r);
 	}
 
-	static glm::vec3 matMul(const glm::mat4 &m, const glm::vec3 &v) {
-		return glm::vec3(m * glm::vec4(v, 1.0f));
-	}
-
-	float lineIntersectAtDistance(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
-		float dist = glm::length(lineDir);
-		for (unsigned int ix = 0; ix < this->collisionTriList.size(); ++ix) {
-			collisionTri t = this->collisionTriList[ix];
-			glm::vec2 isBary;
-			GLfloat d;
-			if (glm::intersectRayTriangle(lineOrig, lineDir, matMul(proj, t.p0), matMul(proj, t.p1), matMul(proj, t.p2), isBary, d)) {
-				if ((d >= 0) && (d < dist))
-					return d;
-			}
-		}
-		return NAN;
-	}
-
-	bool lineIntersectCheck(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir, float &distLimit) {
-		float dist = this->lineIntersectAtDistance(proj, lineOrig, lineDir);
-		if (isnan(dist))
-			return false; // no intersection
-		if (dist > distLimit)
-			return false; // intersection but further away than current limit
-		distLimit = dist; // update return value to smaller, new distance
-		return true;
-	}
-
 	std::vector<unsigned int> startIx;
 	std::vector<unsigned int> endIx;
 protected:
 	std::vector<glm::vec3> *vertices;
 	glm::vec3 cog;
 	bool closed = false;
-
-	typedef struct {
-	public:
-		glm::vec3 p0;
-		glm::vec3 p1;
-		glm::vec3 p2;
-	} collisionTri;
-
-	std::vector<collisionTri> collisionTriList;
 };
 
 explosible::explosible(instMan *im, unsigned int nCol) :
-		blueprint(im, nCol) {
+		blueprintHitscan(im, nCol) {
 	std::vector<unsigned int> startIx;
 	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
 		startIx.push_back(this->im->getIsti(this->imHandle, ixCol)->getTriCount());
@@ -230,12 +227,4 @@ void explosible::explode(explTraj *traj, glm::vec3 impact, float speed, float an
 		glm::vec3 axis = this->fragments[ix]->getAxis();
 		traj->registerFragment(dir, speed, axis, angSpeed);
 	}
-}
-
-bool explosible::lineIntersectCheck(const glm::mat4 &transf, const glm::vec3 &lineOrigin, const glm::vec3 &lineDir, float &distLimit) const {
-	bool retVal = false;
-	for (unsigned int ix = 0; ix < this->fragments.size(); ++ix) {
-		retVal |= this->fragments[ix]->lineIntersectCheck(transf, lineOrigin, lineDir, distLimit);
-	}
-	return retVal;
 }

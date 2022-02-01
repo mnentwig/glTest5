@@ -52,6 +52,7 @@ protected:
     }
   }
 
+  // TODO refactor to return two zero-index-based vertex sets and tris
   static void generateOutlinedShape(glm::vec3* vertices, int nVertices, float width, instStackTriInst* isOuter, instStackTriInst* isInner){
     assert(isOuter != NULL);// isInner is optional
     std::vector<glm::vec3> kneeList;

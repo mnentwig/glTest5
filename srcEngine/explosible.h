@@ -9,7 +9,7 @@ class explTraj;
 
 class blueprint {
 public:
-	explicit blueprint(instMan *im, unsigned int nCol);
+	blueprint(instMan *im, unsigned int nCol);
 	void finalize();
 	void render(const glm::mat4 &proj, const std::vector<glm::vec3> &rgb);
 protected:
@@ -19,9 +19,25 @@ protected:
 	blueprint& operator =(const blueprint&) = delete; // prevent copy
 };
 
-class explosible: public blueprint {
+class blueprintHitscan: public blueprint {
 public:
-	explicit explosible(instMan *im, unsigned int nCol);
+	blueprintHitscan(instMan *im, unsigned int nCol);
+	void addHitscanSurface(const std::vector<glm::vec3> vertices);
+	float lineIntersectAtDistance(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir);
+protected:
+	typedef struct {
+	public:
+		glm::vec3 p0;
+		glm::vec3 p1;
+		glm::vec3 p2;
+	} collisionTri;
+	std::vector<collisionTri> collisionTriList;
+	std::vector<std::vector<glm::vec3>> hitscanSurfaces;
+};
+
+class explosible: public blueprintHitscan {
+public:
+	explosible(instMan *im, unsigned int nCol);
 	void generateOutlinedShape(glm::vec3 *vertices, unsigned int nVertices, float width);
 	void generateOutlinedBody(glm::vec3 *vertices1, glm::vec3 *vertices2, unsigned int nVertices, float width);
 	void closeFragment();
