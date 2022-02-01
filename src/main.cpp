@@ -2,7 +2,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <vector>
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h> // for keycodes
 #include "../srcEngine/engine.h"
 #include "../srcEngine/observer.h"
 #include "../srcEngine/instMan.h"
@@ -10,7 +10,6 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
-#include <glm/gtx/norm.hpp>
 #include "../srcEngine/glTypes.h"
 
 explosible* generateTestcube(float edgeLen, float width, instMan *im) {
