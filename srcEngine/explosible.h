@@ -13,9 +13,9 @@ class explosible {
   void generateOutlinedBody(glm::vec3* vertices1, glm::vec3* vertices2, unsigned int nVertices, float width);
   void closeFragment();
   void finalize();
-  void render(const glm::mat4& proj, const glm::vec3& rgbOuter, const glm::vec3& rgbInner);
+  void render(const glm::mat4& proj, const std::vector<glm::vec3>& rgb);
   void renderExplosion(const glm::mat4 &model2model, const glm::mat4& model2world,
-		  const explTraj &traj, const glm::vec3 &rgbOuter, const glm::vec3 &rgbInner);
+		  const explTraj &traj, const std::vector<glm::vec3>& rgb);
   void explode(explTraj* traj, glm::vec3 impact, float speed, float angSpeed);
   bool lineIntersectCheck(const glm::mat4& proj, const glm::vec3& pos, const glm::vec3& delta, float& distLimit) const;
   explosible(const explosible&) = delete; // prevent copy
@@ -23,8 +23,6 @@ class explosible {
  protected:
   instMan* im;
   unsigned int imHandle;
-  instStackTriInst* isOutline;
-  instStackTriInst* isFill;
   fragment* currentFragment;
   std::vector<fragment*> fragments;
 };

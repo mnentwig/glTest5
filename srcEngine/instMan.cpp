@@ -2,81 +2,95 @@
 #include "instMan.h"
 #include <glm/glm.hpp>
 #include "instStackTriInst.h"
+#include <vector>
 #include <iostream>
+class instTemplate {
+public:
+	std::vector<glm::mat4> proj;
+	std::vector<std::vector<glm::vec3>> cols;
+	std::vector<instStackTriInst*> isti;
+	bool overlayMode;
+};
 
-// TODO: Make number of colors variable instead of outline / fill
-instMan::instMan(){
-  this->nHandles = 0;
-  this->frameIsOn = false;
-}
-unsigned int instMan::openHandle(bool isOverlay){
-  this->allProj.push_back(new std::vector<glm::mat4>);
-  this->allRgbOutline.push_back(new std::vector<glm::vec3>);
-  this->allRgbFill.push_back(new std::vector<glm::vec3>);
-  this->isOutline.push_back(new instStackTriInst());
-  this->isFill.push_back(new instStackTriInst());
-  this->overlayMode.push_back(isOverlay ? 1 : 0);
-
-  return this->nHandles++;
+instMan::instMan() {
+	this->nHandles = 0;
+	this->frameIsOn = false;
 }
 
-instStackTriInst* instMan::getIsOutline(unsigned int handle) const{
-  return this->isOutline[handle];
+unsigned int instMan::openHandle(unsigned int nCol, bool isOverlay) {
+	std::cout << this->nHandles << std::endl;
+	instTemplate *t = new instTemplate();
+	t->overlayMode = isOverlay;
+	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
+		t->isti.push_back(new instStackTriInst());
+		t->cols.push_back(std::vector<glm::vec3>());
+	}
+	this->templates.push_back(t);
+	return this->nHandles++;
 }
 
-instStackTriInst* instMan::getIsFill(unsigned int handle) const{
-  return this->isFill[handle];
+instStackTriInst* instMan::getIsti(unsigned int handle, int ixCol) const {
+	return this->templates[handle]->isti[ixCol];
 }
 
-void instMan::startFrame(){
-  assert(!this->frameIsOn);
-  this->frameIsOn = true;
+void instMan::startFrame() {
+	assert(!this->frameIsOn);
+	this->frameIsOn = true;
 
-  for (unsigned int ix = 0; ix < this->nHandles; ++ix){
-    this->allProj[ix]->clear();
-    this->allRgbOutline[ix]->clear();
-    this->allRgbFill[ix]->clear();
-  }
+	for (unsigned int ix = 0; ix < this->nHandles; ++ix) {
+		instTemplate *t = this->templates[ix];
+		t->proj.clear();
+		for (unsigned int ixCol = 0; ixCol < t->cols.size(); ++ixCol) {
+			t->cols[ixCol].clear();
+		}
+	}
 }
 
-void instMan::renderInst(unsigned int handle, const glm::mat4 &proj, const glm::vec3 &rgbOutline, const glm::vec3 &rgbFill){
-  assert(this->frameIsOn);
+void instMan::renderInst(unsigned int handle, const glm::mat4 &proj, const std::vector<glm::vec3> rgb) {
+	assert(this->frameIsOn);
+	instTemplate *t = this->templates[handle];
+	assert(rgb.size() == t->isti.size());
 
-  this->allProj[handle]->push_back(proj);
-  this->allRgbOutline[handle]->push_back(rgbOutline);
-  this->allRgbFill[handle]->push_back(rgbFill);  
+	t->proj.push_back(proj);
+	for (unsigned int ixIs = 0; ixIs < t->isti.size(); ++ixIs) {
+		t->cols[ixIs].push_back(rgb[ixIs]);
+	}
+
+	this->templates[handle]->cols.push_back(rgb);
 }
 
-void instMan::endFrame(){
-  assert(this->frameIsOn);
-  this->frameIsOn = false;
+void instMan::endFrame() {
+	assert(this->frameIsOn);
+	this->frameIsOn = false;
 
-  for (unsigned int ix = 0; ix < this->nHandles; ++ix){
-    glm::mat4* proj = this->allProj[ix]->data();
-    int nInst = this->allProj[ix]->size();
-    if (this->overlayMode[ix]){
-      this->isOutline[ix]->runOverlay(proj, this->allRgbOutline[ix]->data(), nInst);
-      this->isFill[ix]->runOverlay(proj, this->allRgbFill[ix]->data(), nInst);
-    } else {
-      this->isOutline[ix]->run(proj, this->allRgbOutline[ix]->data(), nInst);
-      this->isFill[ix]->run(proj, this->allRgbFill[ix]->data(), nInst);
-    }
-  }
+	for (auto it = this->templates.begin(); it != this->templates.end(); ++it) {
+		instTemplate *t = *it;
+		glm::mat4 *proj = t->proj.data();
+		int nInst = t->proj.size();
+		for (unsigned int ixIs = 0; ixIs < t->isti.size(); ++ixIs) {
+			if (t->overlayMode) {
+				t->isti[ixIs]->runOverlay(proj, t->cols[ixIs].data(), nInst);
+			} else {
+				t->isti[ixIs]->run(proj, t->cols[ixIs].data(), nInst);
+			}
+		}
+	}
 }
 
-void instMan::shutdown(){
-  for (unsigned int ix = 0; ix < this->nHandles; ++ix){
-    this->isOutline[ix]->shutdown();
-    this->isFill[ix]->shutdown();
-  }
+void instMan::shutdown() {
+	for (auto it = this->templates.begin(); it != this->templates.end(); ++it) {
+		instTemplate *t = *it;
+		for (unsigned int ixIs = 0; ixIs < t->isti.size(); ++ixIs) {
+			t->isti[ixIs]->shutdown();
+		}
+	}
 }
 
-instMan::~instMan(){
-  for (unsigned int ix = 0; ix < this->nHandles; ++ix){
-    delete this->allProj[ix];
-    delete this->allRgbOutline[ix];
-    delete this->allRgbFill[ix];
-    delete this->isOutline[ix];
-    delete this->isFill[ix];
-  }
+instMan::~instMan() {
+	for (auto it = this->templates.begin(); it != this->templates.end(); ++it) {
+		instTemplate *t = *it;
+		for (unsigned int ixIs = 0; ixIs < t->isti.size(); ++ixIs) {
+			delete t->isti[ixIs];
+		}
+	}
 }

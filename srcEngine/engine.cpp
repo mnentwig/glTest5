@@ -7,7 +7,8 @@
 #define SINGLE_BUFFER
 #define TILE_BASED
 #define SUPERSAMPLING
-//#define WINDOWED
+#define WINDOWED
+//#define NO_MOUSE
 //#define ENABLE_RAW_MOUSE
 
 #define SCANCODE_MB_FIRST (GLFW_KEY_LAST + 1) // first scancode used for mouse buttons
@@ -104,7 +105,9 @@ void engine::startup() {
 	glfwSetCursorPosCallback(this->window, cursor_position_callback);
 	glfwSetMouseButtonCallback(this->window, mouse_button_callback);
 	glfwSetKeyCallback(this->window, key_callback);
+#ifdef NO_MOUSE
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+#endif
 
 #ifdef ENABLE_RAW_MOUSE
     if (glfwRawMouseMotionSupported())

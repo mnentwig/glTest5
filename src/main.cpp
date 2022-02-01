@@ -55,6 +55,10 @@ int main(void) {
 	mgengRoot.getScreenWidthHeight(screenWidth, screenHeight);
 	glm::mat4 persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
 	float nextFpsTime = -1;
+	std::vector<glm::vec3> col;
+	col.push_back(glm::vec3 (0, 1, 0));
+	col.push_back(glm::vec3 (0.1f, 0.1f, 0.1f));
+
 	while (true) {
 		const mgeng::preDrawState *pds = mgengRoot.preDraw();
 		if (pds->windowClose)
@@ -67,8 +71,6 @@ int main(void) {
 		glm::mat4 proj = persp * view;
 
 		im.startFrame();
-		glm::vec3 rgbOuter(0, 1, 0);
-		glm::vec3 rgbInner(0.1, 0.1, 0.1);
 		float phi = pds->time_s * 2.0 * M_PI / 4;
 
 		glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
@@ -77,7 +79,7 @@ int main(void) {
 			for (float z = -11; z <= -10; ++z) {
 				glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0, z)) * rot;
 				glm::mat4 projT = proj * v;
-				testcube->render(projT, rgbOuter, rgbInner);
+				testcube->render(projT, col);
 			}
 		}
 

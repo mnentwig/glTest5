@@ -3,6 +3,8 @@
 #include <glm/fwd.hpp> // Eclipse CODAN needs this
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 void glmPrint(glm::mat3 m){
   printf("%01.3f\t%01.3f\t%01.3f\n",m[0].x, m[1].x, m[2].x);
