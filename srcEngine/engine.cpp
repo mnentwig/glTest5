@@ -3,7 +3,7 @@
 #include <cassert>
 #include "engine.h"
 #include <math.h> // NAN
-
+#include <iostream>
 #define SINGLE_BUFFER
 #define TILE_BASED
 #define SUPERSAMPLING
@@ -64,8 +64,8 @@ void engine::startup() {
 	this->state = READY;
 
 	if (!glfwInit()) {
-		fprintf( stderr, "Failed to initialize GLFW\n");
-		exit(EXIT_FAILURE);
+		std::cerr << "Failed to initialize GLFW" << std::endl;
+		exit(1);
 	}
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
@@ -112,6 +112,16 @@ void engine::startup() {
       glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 #endif
 
+#ifndef linux
+  // Windows version uses GLEW to load openGl libraries but this requires initialization
+  // see also myGl.h
+  glewExperimental = 1;// Needed for core profile
+  if (glewInit () != GLEW_OK) {
+    fprintf (stderr, "Failed to initialize GLEW\n");
+    glfwTerminate ();
+    exit (EXIT_FAILURE);
+  }
+#endif
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);

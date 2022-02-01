@@ -8,9 +8,11 @@
 # object files, somewhat less complex in debugging
 objs_user := main.o
 objs_engine := engine.o instMan.o instStackTriInst.o explosible.o explTraj.o observer.o
+LIBS_WIN = -lglew32.dll -lglfw3.dll -lopengl32
 LIBS_RASPI = -L/usr/lib/aarch64-linux-gnu -lGL -lglfw
+
 CC := g++
-CFLAGS := -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -g -O3
+CFLAGS := -static -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -g -O3
 
 OBJECTS_USER := $(addprefix build/,$(objs_user))
 OBJECTS_ENGINE := $(addprefix buildEngine/,$(objs_engine))
@@ -29,6 +31,8 @@ DEPEXTR_FLAGS = -MMD -MF $(@:.o=.d)
 
 main: 	$(OBJECTS_USER) $(OBJECTS_ENGINE)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS_RASPI)
+mainWin.exe: 	$(OBJECTS_USER) $(OBJECTS_ENGINE)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS_WIN)
 	
 build/%.o: src/%.cpp
 	@echo "building user target '$@'"
@@ -41,6 +45,6 @@ buildEngine/%.o: srcEngine/%.cpp
 	$(CC) $(CFLAGS) -c -o $@ $< $(DEPEXTR_FLAGS)
 
 clean:
-	rm -f $(OBJECTS_USER) $(OBJECTS_ENGINE) $(DEPS_USER) $(DEPS_ENGINE) main 
+	rm -f $(OBJECTS_USER) $(OBJECTS_ENGINE) $(DEPS_USER) $(DEPS_ENGINE) main mainWin.exe
 
 .PHONY: clean 

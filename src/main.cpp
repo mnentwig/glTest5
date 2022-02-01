@@ -52,6 +52,7 @@ int main(void) {
 	o.setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
 	o.setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
 	glm::mat4 persp = glm::perspective(45.0f, 1.0f * e.screenWidth / e.screenHeight, 0.01f, 1000.0f);
+	float nextFpsTime = -1;
 	while (true) {
 		const engine::preDrawState *pds = e.preDraw();
 		if (pds->windowClose)
@@ -80,8 +81,10 @@ int main(void) {
 
 		im.endFrame();
 		e.endDraw();
-		if (pds->frame % 30 == 0)
+		if (pds->time_s > nextFpsTime){
 			std::cout << e.fps << " fps\n";
+			nextFpsTime = pds->time_s + 1.0;
+		}
 	}
 	im.shutdown();
 	e.shutdown();
