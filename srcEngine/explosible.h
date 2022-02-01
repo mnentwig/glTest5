@@ -8,7 +8,7 @@ class fragment;
 class explTraj;
 class explosible {
  public:
-  explosible(instMan* im);
+  explicit explosible(instMan* im);
   void generateOutlinedShape(glm::vec3* vertices, unsigned int nVertices, float width);
   void generateOutlinedBody(glm::vec3* vertices1, glm::vec3* vertices2, unsigned int nVertices, float width);
   void closeFragment();

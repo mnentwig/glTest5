@@ -9,7 +9,7 @@
 namespace engine {
 class observer {
 public:
-	observer(engine *e);
+	explicit observer(engine *e);
     observer(const observer&) = delete; // prevent copy
     observer& operator =(const observer&) = delete; // prevent copy
 
