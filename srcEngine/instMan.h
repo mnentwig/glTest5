@@ -15,6 +15,7 @@ class instMan{
   void startFrame();
   void renderInst(unsigned int handle, const glm::mat4 &proj, const std::vector<glm::vec3> rgb);
   instStackTriInst* getIsti(unsigned int handle, int ixCol) const;
+  unsigned int getNCol(unsigned int handle) const;
   void endFrame();
   void shutdown();
  protected:

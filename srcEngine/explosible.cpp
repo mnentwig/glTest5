@@ -9,6 +9,24 @@
 #include <glm/ext/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
+
+
+blueprint::blueprint(instMan* im, unsigned int nCol){
+	this->im = im;
+	this->imHandle = im->openHandle(nCol, false);
+}
+
+void blueprint::finalize() {
+	unsigned int nCol = this->im->getNCol(this->imHandle);
+	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol){
+		this->im->getIsti(this->imHandle, ixCol)->finalize();
+	}
+}
+
+void blueprint::render(const glm::mat4 &proj, const std::vector<glm::vec3>& rgb) {
+	this->im->renderInst(this->imHandle, proj, rgb);
+}
+
 constexpr int ixColOutline = 0;
 constexpr int ixColFill = 1;
 /** One surface of an "explosible" object that may fly away, spinning wildly
@@ -146,9 +164,7 @@ protected:
 	std::vector<collisionTri> collisionTriList;
 };
 
-explosible::explosible(instMan *im) {
-	this->im = im;
-	this->imHandle = im->openHandle(2, false);
+explosible::explosible(instMan *im, unsigned int nCol):blueprint(im, nCol) {
 	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
 	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
 	this->currentFragment = new fragment(isOutline->getTriCount(), isFill->getTriCount());
@@ -188,17 +204,6 @@ void explosible::closeFragment() {
 	this->currentFragment->close(isOutline->getTriCount(), isFill->getTriCount());
 	this->fragments.push_back(this->currentFragment);
 	this->currentFragment = new fragment(isOutline->getTriCount(), isFill->getTriCount()); // TODO open-/close fragment explicitly?
-}
-
-void explosible::finalize() {
-	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
-	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
-	isOutline->finalize();
-	isFill->finalize();
-}
-
-void explosible::render(const glm::mat4 &proj, const std::vector<glm::vec3>& rgb) {
-	this->im->renderInst(this->imHandle, proj, rgb);
 }
 
 void explosible::renderExplosion(const glm::mat4 &model2screen, const glm::mat4 &model2model, const explTraj &traj, const std::vector<glm::vec3> &rgb) {

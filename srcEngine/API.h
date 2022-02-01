@@ -55,4 +55,11 @@ protected:
 	observer(const observer&) = delete; // FORBID COPY
 	observer& operator =(const observer&) = delete;  // FORBID COPY
 };
+#if 0
+class instancedObj {
+public:
+	instancedObj(root*, int nCols);
+	~instancedObj();
+};
+#endif
 } // namespace

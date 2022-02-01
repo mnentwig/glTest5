@@ -29,6 +29,10 @@ unsigned int instMan::openHandle(unsigned int nCol, bool isOverlay) {
 	return this->nHandles++;
 }
 
+unsigned int instMan::getNCol(unsigned int handle) const {
+	return this->templates[handle]->isti.size();
+}
+
 instStackTriInst* instMan::getIsti(unsigned int handle, int ixCol) const {
 	return this->templates[handle]->isti[ixCol];
 }

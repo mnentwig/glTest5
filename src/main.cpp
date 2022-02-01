@@ -12,7 +12,7 @@
 #include "../srcEngine/glTypes.h"
 
 explosible* generateTestcube(float edgeLen, float width, instMan *im) {
-	explosible *ex = new explosible(im);
+	explosible *ex = new explosible(im, 2);
 	float e = 0.5 * edgeLen;
 	std::vector<glm::vec3> v1;
 	v1.push_back(glm::vec3(-e, -e, -e));
