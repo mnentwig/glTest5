@@ -6,6 +6,7 @@
 #include "../srcEngine/instMan.h"
 #include "../srcEngine/explosible.h"
 #include "../srcEngine/API.h"
+#include "../srcEngine/explTraj.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -59,6 +60,8 @@ int main(void) {
 	col.push_back(glm::vec3 (0, 1, 0));
 	col.push_back(glm::vec3 (0.1f, 0.1f, 0.1f));
 
+	explTraj* et = new explTraj();
+	testcube->explode(et, glm::vec3(0, 0, 0), 1.0f, 1.0f);
 	while (true) {
 		const mgeng::preDrawState *pds = mgengRoot.preDraw();
 		if (pds->windowClose)
@@ -75,6 +78,7 @@ int main(void) {
 
 		glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
 
+#if 0
 		for (float x = -10; x <= 10; ++x) {
 			for (float z = -11; z <= -10; ++z) {
 				glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0, z)) * rot;
@@ -82,6 +86,13 @@ int main(void) {
 				testcube->render(projT, col);
 			}
 		}
+#else
+		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -10)) * rot;
+		glm::mat4 projT = proj * v;
+//		testcube->render(projT, col);
+		testcube->renderExplosion(projT, glm::mat4(1.0f), *et, col );
+		et->clock(pds->deltaTime_s);
+#endif
 
 		im.endFrame();
 		mgengRoot.endDraw();

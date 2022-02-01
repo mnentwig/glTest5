@@ -10,20 +10,19 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
 
-
-blueprint::blueprint(instMan* im, unsigned int nCol){
+blueprint::blueprint(instMan *im, unsigned int nCol) {
 	this->im = im;
 	this->imHandle = im->openHandle(nCol, false);
 }
 
 void blueprint::finalize() {
 	unsigned int nCol = this->im->getNCol(this->imHandle);
-	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol){
+	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
 		this->im->getIsti(this->imHandle, ixCol)->finalize();
 	}
 }
 
-void blueprint::render(const glm::mat4 &proj, const std::vector<glm::vec3>& rgb) {
+void blueprint::render(const glm::mat4 &proj, const std::vector<glm::vec3> &rgb) {
 	this->im->renderInst(this->imHandle, proj, rgb);
 }
 
@@ -34,11 +33,8 @@ constexpr int ixColFill = 1;
  */
 class fragment {
 public:
-	fragment(unsigned int startIxTriOutline, unsigned int startIxTriFill) {
-		this->startIxTriOutline = startIxTriOutline;
-		this->endIxTriOutline = startIxTriOutline;
-		this->startIxTriFill = startIxTriFill;
-		this->endIxTriFill = endIxTriFill;
+	fragment(const std::vector<unsigned int> startIx) {
+		this->startIx = startIx;
 		this->vertices = new std::vector<glm::vec3>();
 	}
 
@@ -47,10 +43,9 @@ public:
 		this->vertices->push_back(v);
 	}
 
-	void close(unsigned int endIxTriOutline, unsigned int endIxTriFill) {
+	void close(std::vector<unsigned int> endIx) {
 		assert(!this->closed);
-		this->endIxTriOutline = endIxTriOutline;
-		this->endIxTriFill = endIxTriFill;
+		this->endIx = endIx;
 
 // === calculate center-of-gravity ===
 		this->cog = glm::vec3(0, 0, 0);
@@ -145,10 +140,8 @@ public:
 		return true;
 	}
 
-	unsigned int startIxTriOutline;
-	unsigned int startIxTriFill;
-	unsigned int endIxTriOutline;
-	unsigned int endIxTriFill;
+	std::vector<unsigned int> startIx;
+	std::vector<unsigned int> endIx;
 protected:
 	std::vector<glm::vec3> *vertices;
 	glm::vec3 cog;
@@ -164,10 +157,13 @@ protected:
 	std::vector<collisionTri> collisionTriList;
 };
 
-explosible::explosible(instMan *im, unsigned int nCol):blueprint(im, nCol) {
-	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
-	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
-	this->currentFragment = new fragment(isOutline->getTriCount(), isFill->getTriCount());
+explosible::explosible(instMan *im, unsigned int nCol) :
+		blueprint(im, nCol) {
+	std::vector<unsigned int> startIx;
+	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
+		startIx.push_back(this->im->getIsti(this->imHandle, ixCol)->getTriCount());
+	}
+	this->currentFragment = new fragment(startIx);
 }
 
 void explosible::generateOutlinedShape(glm::vec3 *vertices, unsigned int nVertices, float width) {
@@ -199,16 +195,18 @@ void explosible::generateOutlinedBody(glm::vec3 *vertices1, glm::vec3 *vertices2
 }
 
 void explosible::closeFragment() {
-	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
-	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
-	this->currentFragment->close(isOutline->getTriCount(), isFill->getTriCount());
+	std::vector<unsigned int> endIx;
+	unsigned int nCol = this->im->getNCol(this->imHandle);
+	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
+		endIx.push_back(this->im->getIsti(this->imHandle, ixCol)->getTriCount());
+	}
+	this->currentFragment->close(endIx);
 	this->fragments.push_back(this->currentFragment);
-	this->currentFragment = new fragment(isOutline->getTriCount(), isFill->getTriCount()); // TODO open-/close fragment explicitly?
+	this->currentFragment = new fragment(/*becomes new frag startIx*/endIx); // TODO maybe open-/close fragment explicitly?
 }
 
 void explosible::renderExplosion(const glm::mat4 &model2screen, const glm::mat4 &model2model, const explTraj &traj, const std::vector<glm::vec3> &rgb) {
-	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
-	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
+	unsigned int nCol = this->im->getNCol(this->imHandle);
 	for (unsigned int ix = 0; ix < this->fragments.size(); ++ix) {
 		fragment *f = this->fragments[ix];
 		glm::mat4 model2model_expl = glm::translate(glm::mat4(1.0f), traj.getDeltaPos(ix));
@@ -218,8 +216,9 @@ void explosible::renderExplosion(const glm::mat4 &model2screen, const glm::mat4 
 		tot *= f->getUncenterCog();
 		tot *= traj.getRotation(ix);
 		tot *= f->getCenterCog();
-		isOutline->run1(f->startIxTriOutline, f->endIxTriOutline, tot, rgb[ixColOutline]);
-		isFill->run1(f->startIxTriFill, f->endIxTriFill, tot, rgb[ixColFill]);
+		for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
+			this->im->getIsti(this->imHandle, ixCol)->run1(f->startIx[ixCol], f->endIx[ixCol], tot, rgb[ixCol]);
+		}
 	}
 }
 
