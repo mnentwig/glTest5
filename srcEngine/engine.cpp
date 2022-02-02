@@ -55,6 +55,11 @@ void engine::mouse_button_callback(GLFWwindow *window, int button, int action, i
 	e->keyButtonCallback(button, action);
 }
 
+void engine::mouse_enterLeave_callback(GLFWwindow *window, int enterLeave) {
+	engine *e = window2engine[window];
+	e->pdsCurr.mouseInWindow = enterLeave == GLFW_TRUE;
+}
+
 void engine::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
 	engine *e = window2engine[window];
 	e->keyButtonCallback(key, action);
@@ -83,7 +88,7 @@ void engine::startup() {
 // ignored for GLES glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); GLFW_CHK;
 
 #ifdef WINDOWED
-      this->window = glfwCreateWindow(this->screenWidth, this->screenHeight, __FILE__, NULL, NULL);
+	this->window = glfwCreateWindow(this->screenWidth, this->screenHeight, __FILE__, NULL, NULL);
 #else
 	GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode *mode = glfwGetVideoMode(monitor);
@@ -104,6 +109,7 @@ void engine::startup() {
 	glfwSetWindowSizeCallback(this->window, window_size_callback);
 	glfwSetCursorPosCallback(this->window, cursor_position_callback);
 	glfwSetMouseButtonCallback(this->window, mouse_button_callback);
+	glfwSetCursorEnterCallback(this->window, mouse_enterLeave_callback);
 	glfwSetKeyCallback(this->window, key_callback);
 #ifdef NO_MOUSE
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -143,10 +149,14 @@ const mgeng::preDrawState* engine::preDraw() {
 
 // === calculate deltas ===
 	this->pdsCurr.time_s = glfwGetTime();
+	this->pdsCurr.deltaMouseX = 0;
+	this->pdsCurr.deltaMouseY = 0;
 	if (this->pdsCurr.frame > 0) {
 		this->pdsCurr.deltaTime_s = this->pdsCurr.time_s - this->pdsPrev.time_s;
-		this->pdsCurr.deltaMouseX = this->pdsCurr.mouseX - this->pdsPrev.mouseX;
-		this->pdsCurr.deltaMouseY = this->pdsCurr.mouseY - this->pdsPrev.mouseY;
+		if (this->pdsCurr.mouseInWindow && this->pdsPrev.mouseInWindow) {
+			this->pdsCurr.deltaMouseX = this->pdsCurr.mouseX - this->pdsPrev.mouseX;
+			this->pdsCurr.deltaMouseY = this->pdsCurr.mouseY - this->pdsPrev.mouseY;
+		}
 	}
 	++this->pdsCurr.frame;
 	this->pdsPrev = this->pdsCurr;
@@ -206,11 +216,11 @@ void engine::shutdown() {
 // ==============================================================
 // == API
 // ==============================================================
-mgeng::root::root(){
+mgeng::root::root() {
 	this->eng = new engine::engine();
 }
 
-mgeng::root::~root(){
+mgeng::root::~root() {
 	delete this->eng;
 }
 
@@ -230,7 +240,7 @@ void mgeng::root::startup() {
 	this->eng->startup();
 }
 
-void mgeng::root::getScreenWidthHeight(unsigned int& width, unsigned int& height){
+void mgeng::root::getScreenWidthHeight(unsigned int &width, unsigned int &height) {
 	width = this->eng->screenWidth;
 	height = this->eng->screenHeight;
 }
@@ -239,6 +249,6 @@ void mgeng::root::shutdown() {
 	this->eng->shutdown();
 }
 
-void mgeng::root::getFps(float& fps){
+void mgeng::root::getFps(float &fps) {
 	fps = this->eng->fps;
 }

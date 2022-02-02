@@ -19,6 +19,7 @@ public:
 	float deltaMouseY = 0;
 
 	bool windowClose;
+	bool mouseInWindow = true;
 
 	long frame = 0;
 };
