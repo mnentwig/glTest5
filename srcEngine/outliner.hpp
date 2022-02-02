@@ -165,22 +165,4 @@ protected:
       }
     }
   }
-#if 0
-  static void generateOutlinedBody(glm::vec3* vertices1, glm::vec3* vertices2, unsigned int nVertices, float width, instStackTriInst* isOuter, instStackTriInst* isInner){
-    glm::vec3 pts[4];
-    for (unsigned int ix1 = 0; ix1 < nVertices; ++ix1){
-      unsigned int ix2 = (ix1+1) % nVertices;
-      pts[0] = vertices1[ix1];
-      pts[1] = vertices1[ix2];
-      pts[2] = vertices2[ix2];
-      pts[3] = vertices2[ix1];
-      glmPrint(pts[0]);
-      glmPrint(pts[1]);
-      glmPrint(pts[2]);
-      glmPrint(pts[3]);
-      generateOutlinedShape(pts, /*nVertices*/4, width, isOuter, isInner);
-      //generateFilledConvexShape(pts, /*nVertices*/4, isOuter);
-    }
-  }
-#endif
 };

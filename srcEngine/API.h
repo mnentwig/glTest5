@@ -1,6 +1,25 @@
 #pragma once
 #include <glm/fwd.hpp>
 #include <glm/mat4x4.hpp>
+
+typedef unsigned int GLenum;
+typedef unsigned int GLbitfield;
+typedef unsigned int GLuint;
+typedef int GLint;
+typedef int GLsizei;
+typedef unsigned char GLboolean;
+typedef signed char GLbyte;
+typedef short GLshort;
+typedef unsigned char GLubyte;
+typedef unsigned short GLushort;
+typedef unsigned long GLulong;
+typedef float GLfloat;
+typedef float GLclampf;
+typedef double GLdouble;
+typedef double GLclampd;
+typedef void GLvoid;
+typedef char GLchar;
+
 namespace engine {
 class engine;
 class observer;
@@ -8,14 +27,12 @@ class observer;
 namespace mgeng {
 class observer;
 
-#if 0
 // glTypes here...
 struct triIx16 {
   GLushort v1;
   GLushort v2;
   GLushort v3;
 };
-#endif
 
 class preDrawState {
 public:

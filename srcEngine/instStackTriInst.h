@@ -1,7 +1,8 @@
 #pragma once
-#include "myList.hpp"
 #include "allMyGlIncludes.h"
+#include "API.h"
 #include <glm/fwd.hpp>
+#include <vector>
 class instStackTriInst {
  protected:
   bool isFinalized = false;
@@ -12,14 +13,8 @@ class instStackTriInst {
     GLushort v3;
   };
 
-  struct myGlVertex {
-    GLfloat x;
-    GLfloat y;
-    GLfloat z;
-  };
-
-  myList<myGlTri> triList = myList<myGlTri>(10);
-  myList<myGlVertex> vertexList = myList<myGlVertex>(10);
+  std::vector<mgeng::triIx16> triList;
+  std::vector<glm::vec3> vertexList;
   
   // post-finalize
   GLuint idVertex;
