@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <vector>
 #include <GLFW/glfw3.h> // for keycodes
-#include "../srcEngine/instMan.h"
 #include "../srcEngine/explosible.h"
 #include "../srcEngine/API.h"
 #include "../srcEngine/explTraj.h"
@@ -12,8 +11,8 @@
 #include <glm/gtx/transform.hpp>
 #include "../srcEngine/glTypes.h"
 
-explosible* generateTestcube(float edgeLen, float width, instMan *im) {
-	explosible *ex = new explosible(im, 2);
+mgeng::instanced* generateTestcube(mgeng::root* mgengRoot, float edgeLen, float width) {
+	mgeng::instanced *ex = new mgeng::instanced(mgengRoot, 2);
 	float e = 0.5 * edgeLen;
 	std::vector<glm::vec3> v1;
 	v1.push_back(glm::vec3(-e, -e, -e));
@@ -28,16 +27,17 @@ explosible* generateTestcube(float edgeLen, float width, instMan *im) {
 
 	unsigned int nV = v1.size();
 	assert(v2.size() == nV);
-
-	ex->generateOutlinedShape(v1, width);
-	ex->generateOutlinedShape(v2, width);
-	ex->generateOutlinedBody(v1, v2, width);
+	unsigned int colIxOutline = 0;
+	unsigned int colIxFill = 1;
+	bool hitscanEnable = true;
+	ex->generateOutlinedShape(v1, width, colIxOutline, colIxFill, hitscanEnable);
+	ex->generateOutlinedShape(v2, width, colIxOutline, colIxFill, hitscanEnable);
+	ex->generateOutlinedBody(v1, v2, width, colIxOutline, colIxFill, hitscanEnable);
 	ex->finalize();
 	return ex;
 }
 
 int main(void) {
-	instMan im;
 	srand(0);
 #ifdef NDEBUG
   std::cout << "NDEBUG set - assert disabled" << std::endl;
@@ -47,7 +47,7 @@ int main(void) {
   mgeng::root mgengRoot;
 	mgengRoot.startup();
 
-	explosible *testcube = generateTestcube(0.8f, 0.05f, &im);
+	mgeng::instanced *testcube = generateTestcube(&mgengRoot, 0.8f, 0.05f);
 	mgeng::observer* o = new mgeng::observer(&mgengRoot);
 	o->setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
 	o->setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
@@ -60,8 +60,8 @@ int main(void) {
 	col.push_back(glm::vec3 (0, 1, 0));
 	col.push_back(glm::vec3 (0.1f, 0.1f, 0.1f));
 
-	explTraj* et = new explTraj();
-	testcube->explode(et, glm::vec3(0, 0, 0), 0.5f, 1.0f);
+	//explTraj* et = new explTraj();
+	//testcube->explode(et, glm::vec3(0, 0, 0), 0.5f, 1.0f);
 	while (true) {
 		const mgeng::preDrawState *pds = mgengRoot.preDraw();
 		if (pds->windowClose)
@@ -73,7 +73,6 @@ int main(void) {
 
 		glm::mat4 proj = persp * view;
 
-		im.startFrame();
 		float phi = pds->time_s * 2.0 * M_PI / 4;
 
 		glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
@@ -86,12 +85,11 @@ int main(void) {
 			}
 		}
 
-		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3, -10));
-		glm::mat4 projT = proj * v;
-		testcube->renderExplosion(projT, glm::mat4(1.0f), *et, col );
-		et->clock(pds->deltaTime_s);
+		//glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3, -10));
+		//glm::mat4 projT = proj * v;
+		//testcube->renderExplosion(projT, glm::mat4(1.0f), *et, col );
+		//et->clock(pds->deltaTime_s);
 
-		im.endFrame();
 		mgengRoot.endDraw();
 		if (pds->time_s > nextFpsTime){
 			float fps;
@@ -100,7 +98,6 @@ int main(void) {
 			nextFpsTime = pds->time_s + 1.0;
 		}
 	}
-	im.shutdown();
 	mgengRoot.shutdown();
 	std::cout << "main Done" << std::endl;
 	return EXIT_SUCCESS;

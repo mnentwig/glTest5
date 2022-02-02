@@ -1,3 +1,5 @@
+#include "API.h"
+#include "engine.h"
 #include "explosible.h"
 #include "instStackTriInst.h"
 #include "outliner.hpp"
@@ -10,6 +12,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
 
+namespace engine {
 blueprint::blueprint(instMan *im, unsigned int nCol) {
 	this->im = im;
 	this->imHandle = im->openHandle(nCol, false);
@@ -97,8 +100,6 @@ float blueprintHitscan::lineIntersectAtDistance(const glm::mat4 &proj, const glm
 	return dBest <= distMax ? dBest : NAN;
 }
 
-constexpr int ixColOutline = 0;
-constexpr int ixColFill = 1;
 /** One surface of an "explosible" object that may fly away, spinning wildly
  *  Dual purpose: Hitscan detection
  */
@@ -163,10 +164,12 @@ explosible::explosible(instMan *im, unsigned int nCol) :
 	this->currentFragment = new fragment(startIx);
 }
 
-void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float width) {
+void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
 	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
 	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
-	this->addHitscanSurface(vertices);
+	if (hitscanEnable) {
+		this->addHitscanSurface(vertices);
+	}
 	std::vector<glm::vec3> vertOutline;
 	std::vector<mgeng::triIx16> triOutline;
 	std::vector<glm::vec3> vertFill;
@@ -179,7 +182,7 @@ void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float wi
 	this->closeFragment();
 }
 
-void explosible::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width) {
+void explosible::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
 	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
 	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
 	std::vector<glm::vec3> pts(4);
@@ -190,8 +193,9 @@ void explosible::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vec
 		pts[1] = vertices1[ix2];
 		pts[2] = vertices2[ix2];
 		pts[3] = vertices2[ix1];
-		this->addHitscanSurface(pts);
-
+		if (hitscanEnable) {
+			this->addHitscanSurface(pts);
+		}
 		std::vector<glm::vec3> vertOutline;
 		std::vector<mgeng::triIx16> triOutline;
 		std::vector<glm::vec3> vertFill;
@@ -206,7 +210,7 @@ void explosible::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vec
 		this->currentFragment->addVertex(pts[3]);
 		this->closeFragment();
 	}
-}
+} // namespace
 
 void explosible::closeFragment() {
 	std::vector<unsigned int> endIx;
@@ -244,4 +248,22 @@ void explosible::explode(explTraj *traj, glm::vec3 impact, float speed, float an
 		glm::vec3 axis = this->fragments[ix]->getAxis();
 		traj->registerFragment(dir, speed, axis, angSpeed);
 	}
+}
+} //namespace
+
+mgeng::instanced::instanced(mgeng::root *root, unsigned int nCol) {
+	this->ex = new engine::explosible(&root->eng->im, nCol);
+}
+//TODO add const below to params
+void mgeng::instanced::generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
+	this->ex->generateOutlinedShape(vertices, width, ixColOutline, ixColFill, hitscanEnable);
+}
+void mgeng::instanced::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
+	this->ex->generateOutlinedBody(vertices1, vertices2, width, ixColOutline, ixColFill, hitscanEnable);
+}
+void mgeng::instanced::finalize() {
+	this->ex->finalize();
+}
+void mgeng::instanced::render(glm::mat4 proj, std::vector<glm::vec3> col) {
+	this->ex->render(proj, col);
 }

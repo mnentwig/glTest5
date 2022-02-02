@@ -4,8 +4,6 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/norm.hpp>
 #include <vector>
-#include <iostream>
-#include "instStackTriInst.h"
 #include "API.h"
 class outliner {
 protected:

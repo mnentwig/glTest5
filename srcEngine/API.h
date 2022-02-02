@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/fwd.hpp>
 #include <glm/mat4x4.hpp>
+#include <vector>
 
 typedef unsigned int GLenum;
 typedef unsigned int GLbitfield;
@@ -20,18 +21,31 @@ typedef double GLclampd;
 typedef void GLvoid;
 typedef char GLchar;
 
+// opaque payload for API wrapper
 namespace engine {
 class engine;
 class observer;
+class explosible;
+class explTraj;
 }
+// incomplete classes for "friend"
 namespace mgeng {
 class observer;
+class instanced;
+
+class noncopyable {
+protected:
+	constexpr noncopyable() = default;
+	~noncopyable() = default;
+	noncopyable(const noncopyable&) = delete;
+	noncopyable& operator=(const noncopyable&) = delete;
+};
 
 // glTypes here...
 struct triIx16 {
-  GLushort v1;
-  GLushort v2;
-  GLushort v3;
+	GLushort v1;
+	GLushort v2;
+	GLushort v3;
 };
 
 class preDrawState {
@@ -50,7 +64,7 @@ public:
 	long frame = 0;
 };
 
-class root {
+class root: private noncopyable {
 public:
 	root();
 	~root();
@@ -63,12 +77,11 @@ public:
 	void shutdown();
 protected:
 	engine::engine *eng;
-	root(const root&) = delete; // FORBID COPY
-	root& operator =(const root&) = delete;  // FORBID COPY
 	friend observer;
+	friend instanced;
 };
 
-class observer {
+class observer: private noncopyable {
 public:
 	explicit observer(root*);
 	~observer();
@@ -79,14 +92,25 @@ public:
 
 protected:
 	engine::observer *obs;
-	observer(const observer&) = delete; // FORBID COPY
-	observer& operator =(const observer&) = delete;  // FORBID COPY
 };
-#if 0
-class instancedObj {
+
+class instanced: private noncopyable {
 public:
-	instancedObj(root*, int nCols);
-	~instancedObj();
+	instanced(root*, unsigned int nCols);
+	~instanced();
+	void generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
+	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
+	void finalize();
+	void render(glm::mat4 proj, std::vector<glm::vec3> col);
+protected:
+	engine::explosible *ex;
 };
-#endif
+
+class instancedExplosion: private noncopyable {
+public:
+	explicit instancedExplosion(root*);
+	void clock(float deltaT_s);
+protected:
+	engine::explTraj *traj;
+};
 } // namespace

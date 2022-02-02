@@ -2,6 +2,7 @@
 #include <map>
 #include <cassert>
 #include "engine.h"
+#include "../srcEngine/instMan.h"
 #include <math.h> // NAN
 #include <iostream>
 #define SINGLE_BUFFER
@@ -193,11 +194,14 @@ void engine::beginDraw() {
 	glStencilMask(0xFFFFFFFF);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 #endif
+	this->im.startFrame();
 }
 
 void engine::endDraw() {
 	assert(this->state == DRAW);
 	this->state = READY;
+	this->im.endFrame();
+
 // === show new image ===
 #ifdef SINGLE_BUFFER
 	glFlush();
@@ -209,6 +213,7 @@ void engine::endDraw() {
 void engine::shutdown() {
 	assert(this->state != NEW); // need glfwInit()
 	this->state = SHUTDOWN;
+	this->im.shutdown();
 	glfwTerminate();
 }
 } // namespace

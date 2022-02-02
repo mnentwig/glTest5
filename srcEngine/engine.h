@@ -2,6 +2,7 @@
 #include <set>
 #include "fpsEstimator.hpp"
 #include "API.h"
+#include "instMan.h"
 
 class GLFWwindow;
 namespace engine {
@@ -30,6 +31,7 @@ namespace engine {
     bool testKeycodeReleaseEvt(int keycode);
 
     float fps;
+	instMan im;
     protected:
     state_e state = NEW;
     GLFWwindow *window = NULL;

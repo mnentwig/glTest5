@@ -7,6 +7,7 @@ class instStackTriInst;
 class fragment;
 class explTraj;
 
+namespace engine {
 class blueprint {
 public:
 	blueprint(instMan *im, unsigned int nCol);
@@ -35,11 +36,12 @@ protected:
 	std::vector<std::vector<glm::vec3>> hitscanSurfaces;
 };
 
+class fragment;
 class explosible: public blueprintHitscan {
 public:
 	explosible(instMan *im, unsigned int nCol);
-	void generateOutlinedShape(std::vector<glm::vec3> vertices, float width);
-	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width);
+	void generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
+	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
 	void closeFragment();
 	void renderExplosion(const glm::mat4 &model2model, const glm::mat4 &model2world, const explTraj &traj, const std::vector<glm::vec3> &rgb);
 	void explode(explTraj *traj, glm::vec3 impact, float speed, float angSpeed);
@@ -48,3 +50,4 @@ protected:
 	fragment *currentFragment;
 	std::vector<fragment*> fragments;
 };
+}
