@@ -163,26 +163,29 @@ explosible::explosible(instMan *im, unsigned int nCol) :
 	this->currentFragment = new fragment(startIx);
 }
 
-void explosible::generateOutlinedShape(glm::vec3 *vertices, unsigned int nVertices, float width) {
+void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float width) {
 	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
 	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
-	outliner::generateOutlinedShape(vertices, nVertices, width, isOutline, isFill);
-	for (unsigned int ix = 0; ix < nVertices; ++ix)
+	this->addHitscanSurface(vertices);
+	outliner::generateOutlinedShape(vertices, width, isOutline, isFill);
+	for (unsigned int ix = 0; ix < vertices.size(); ++ix)
 		this->currentFragment->addVertex(vertices[ix]);
 	this->closeFragment();
 }
 
-void explosible::generateOutlinedBody(glm::vec3 *vertices1, glm::vec3 *vertices2, unsigned int nVertices, float width) {
+void explosible::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width) {
 	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
 	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
-	glm::vec3 pts[4];
+	std::vector<glm::vec3> pts(4);
+	unsigned int nVertices = vertices1.size();
 	for (unsigned int ix1 = 0; ix1 < nVertices; ++ix1) {
 		unsigned int ix2 = (ix1 + 1) % nVertices;
 		pts[0] = vertices1[ix1];
 		pts[1] = vertices1[ix2];
 		pts[2] = vertices2[ix2];
 		pts[3] = vertices2[ix1];
-		outliner::generateOutlinedShape(pts, /*nVertices*/4, width, isOutline, isFill);
+		this->addHitscanSurface(pts);
+		outliner::generateOutlinedShape(pts, width, isOutline, isFill);
 		this->currentFragment->addVertex(pts[0]);
 		this->currentFragment->addVertex(pts[1]);
 		this->currentFragment->addVertex(pts[2]);

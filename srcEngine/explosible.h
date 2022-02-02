@@ -38,8 +38,8 @@ protected:
 class explosible: public blueprintHitscan {
 public:
 	explosible(instMan *im, unsigned int nCol);
-	void generateOutlinedShape(glm::vec3 *vertices, unsigned int nVertices, float width);
-	void generateOutlinedBody(glm::vec3 *vertices1, glm::vec3 *vertices2, unsigned int nVertices, float width);
+	void generateOutlinedShape(std::vector<glm::vec3> vertices, float width);
+	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width);
 	void closeFragment();
 	void renderExplosion(const glm::mat4 &model2model, const glm::mat4 &model2world, const explTraj &traj, const std::vector<glm::vec3> &rgb);
 	void explode(explTraj *traj, glm::vec3 impact, float speed, float angSpeed);

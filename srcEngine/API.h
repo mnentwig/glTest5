@@ -8,6 +8,15 @@ class observer;
 namespace mgeng {
 class observer;
 
+#if 0
+// glTypes here...
+struct triIx16 {
+  GLushort v1;
+  GLushort v2;
+  GLushort v3;
+};
+#endif
+
 class preDrawState {
 public:
 	float time_s;

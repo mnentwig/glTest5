@@ -29,9 +29,9 @@ explosible* generateTestcube(float edgeLen, float width, instMan *im) {
 	unsigned int nV = v1.size();
 	assert(v2.size() == nV);
 
-	ex->generateOutlinedShape(v1.data(), nV, width);
-	ex->generateOutlinedShape(v2.data(), nV, width);
-	ex->generateOutlinedBody(v1.data(), v2.data(), nV, width);
+	ex->generateOutlinedShape(v1, width);
+	ex->generateOutlinedShape(v2, width);
+	ex->generateOutlinedBody(v1, v2, width);
 	ex->finalize();
 	return ex;
 }

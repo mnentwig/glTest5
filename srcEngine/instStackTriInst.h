@@ -17,7 +17,7 @@ class instStackTriInst {
     GLfloat y;
     GLfloat z;
   };
-  
+
   myList<myGlTri> triList = myList<myGlTri>(10);
   myList<myGlVertex> vertexList = myList<myGlVertex>(10);
   

@@ -53,17 +53,19 @@ protected:
   }
 
   // TODO refactor to return two zero-index-based vertex sets and tris
-  static void generateOutlinedShape(glm::vec3* vertices, int nVertices, float width, instStackTriInst* isOuter, instStackTriInst* isInner){
+  static void generateOutlinedShape(const std::vector<glm::vec3> vertices, float width, instStackTriInst* isOuter, instStackTriInst* isInner){
     assert(isOuter != NULL);// isInner is optional
+    unsigned int nVertices = vertices.size();
+
     std::vector<glm::vec3> kneeList;
 
 // === determine center of shape ===
     glm::vec3 center (0.0f);
-    for (int ix = 0; ix < nVertices; ++ix)
+    for (unsigned int ix = 0; ix < nVertices; ++ix)
       center += vertices[ix];
     center /= (float) nVertices;
 
-    for (int ix = 0; ix < nVertices; ++ix) {
+    for (unsigned int ix = 0; ix < nVertices; ++ix) {
       glm::vec3 v0 = vertices[(ix - 1 + nVertices) % nVertices];
       glm::vec3 v1 = vertices[(ix + 0 + nVertices) % nVertices];
       glm::vec3 v2 = vertices[(ix + 1 + nVertices) % nVertices];
@@ -124,11 +126,11 @@ protected:
 // === create outline polygons ===
     std::vector<GLuint> vOuter;
     std::vector<GLuint> vInner;
-    for (int ix = 0; ix < nVertices; ++ix) {
+    for (unsigned int ix = 0; ix < nVertices; ++ix) {
       vOuter.push_back (isOuter->pushVertex (vertices[ix]));
       vInner.push_back (isOuter->pushVertex (kneeList[ix]));
     }
-    for (int ix = 0; ix < nVertices; ++ix) {
+    for (unsigned int ix = 0; ix < nVertices; ++ix) {
       int ix2 = (ix + 1) % nVertices;
       isOuter->pushTwoTri (vOuter[ix], vOuter[ix2], vInner[ix2], vInner[ix]);
     }
@@ -136,7 +138,7 @@ protected:
     if (isInner != NULL) {
 // === create fill polygons ===
       std::vector<fillVertex> vList;
-      for (int ix = 0; ix < nVertices; ++ix) {
+      for (unsigned int ix = 0; ix < nVertices; ++ix) {
         fillVertex fv;
         fv.vertex = kneeList[ix];
         fv.id = isInner->pushVertex (fv.vertex);
