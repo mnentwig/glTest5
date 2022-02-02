@@ -31,11 +31,12 @@ class instStackTriInst {
   void finalize();
   void reset();
 
-  /** close object while openGl is still up */
+  /** note: must shutdown() while openGl is still up */
   void shutdown();
   unsigned int pushVertex(glm::vec3 xyz);
   void pushTri(int v1, int v2, int v3);
   void pushTwoTri(int v1, int v2, int v3, int v4);
+  void pushTris(std::vector<glm::vec3> vertices, std::vector<mgeng::triIx16> tris, bool rebaseZeroBasedIndices);
   void run(const glm::mat4* const proj, const glm::vec3* const rgb, int nInst) const;
   void runOverlay(const glm::mat4* const proj, const glm::vec3* const rgb, int nInst) const;
   void run1(unsigned int ixTri1, unsigned int ixTri2, const glm::mat4 &proj, const glm::vec3 &rgb) const;

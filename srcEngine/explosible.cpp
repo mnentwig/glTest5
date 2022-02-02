@@ -167,7 +167,13 @@ void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float wi
 	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
 	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
 	this->addHitscanSurface(vertices);
-	outliner::generateOutlinedShape(vertices, width, isOutline, isFill);
+	std::vector<glm::vec3> vertOutline;
+	std::vector<mgeng::triIx16> triOutline;
+	std::vector<glm::vec3> vertFill;
+	std::vector<mgeng::triIx16> triFill;
+	outliner::generateOutlinedShape(vertices, width, vertOutline, triOutline, vertFill, triFill);
+	isOutline->pushTris(vertOutline, triOutline, /*rebaseZeroBasedIndices*/true);
+	isFill->pushTris(vertFill, triFill, /*rebaseZeroBasedIndices*/true);
 	for (unsigned int ix = 0; ix < vertices.size(); ++ix)
 		this->currentFragment->addVertex(vertices[ix]);
 	this->closeFragment();
@@ -185,7 +191,15 @@ void explosible::generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vec
 		pts[2] = vertices2[ix2];
 		pts[3] = vertices2[ix1];
 		this->addHitscanSurface(pts);
-		outliner::generateOutlinedShape(pts, width, isOutline, isFill);
+
+		std::vector<glm::vec3> vertOutline;
+		std::vector<mgeng::triIx16> triOutline;
+		std::vector<glm::vec3> vertFill;
+		std::vector<mgeng::triIx16> triFill;
+		outliner::generateOutlinedShape(pts, width, vertOutline, triOutline, vertFill, triFill);
+		isOutline->pushTris(vertOutline, triOutline, /*rebaseZeroBasedIndices*/true);
+		isFill->pushTris(vertFill, triFill, /*rebaseZeroBasedIndices*/true);
+
 		this->currentFragment->addVertex(pts[0]);
 		this->currentFragment->addVertex(pts[1]);
 		this->currentFragment->addVertex(pts[2]);

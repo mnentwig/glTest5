@@ -85,6 +85,21 @@ instStackTriInst::instStackTriInst() {
 	this->idRgb = 0; // avoid warning
 }
 
+void instStackTriInst::pushTris(std::vector<glm::vec3> vertices, std::vector<mgeng::triIx16> tris, bool rebaseZeroBasedIndices) {
+	unsigned int baseVertex = this->vertexList.size();
+	unsigned int firstNewTri = this->triList.size();
+	this->vertexList.insert(this->vertexList.end(), vertices.begin(), vertices.end());
+	this->triList.insert(this->triList.end(), tris.begin(), tris.end());
+
+	if (rebaseZeroBasedIndices) {
+		for (unsigned int ix = firstNewTri; ix < this->triList.size(); ++ix) {
+			this->triList[ix].v1 += baseVertex;
+			this->triList[ix].v2 += baseVertex;
+			this->triList[ix].v3 += baseVertex;
+		}
+	}
+}
+
 unsigned int instStackTriInst::pushVertex(glm::vec3 xyz) {
 	assert(!this->isFinalized);
 	unsigned int retVal = this->vertexList.size();
