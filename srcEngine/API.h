@@ -77,6 +77,9 @@ public:
 	void beginDraw();
 	void endDraw();
 	void shutdown();
+    bool testKeycodePressed(int keycode);
+    bool testKeycodePressEvt(int keycode);
+    bool testKeycodeReleaseEvt(int keycode);
 protected:
 	engine::engine *eng;
 	friend observer;
@@ -106,6 +109,7 @@ public:
 	void render(glm::mat4 proj, std::vector<glm::vec3> col);
 	void explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed);
 	void renderExplosion(const instancedExplosion* traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb);
+	float hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir);
 protected:
 	engine::explosible *ex;
 };
@@ -118,4 +122,6 @@ protected:
 	engine::explTraj *traj;
 	friend instanced;
 };
+
+constexpr unsigned int keycodeMouseButton0 = 0x1000;
 } // namespace

@@ -8,6 +8,7 @@
 #include <math.h>
 #include <vector>
 #include <assert.h>
+#include <limits>
 #include <glm/ext/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
@@ -85,9 +86,9 @@ static glm::vec3 matMul(const glm::mat4 &m, const glm::vec3 &v) {
 	return glm::vec3(m * glm::vec4(v, 1.0f));
 }
 
-float blueprintHitscan::lineIntersectAtDistance(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
-	float distMax = glm::length(lineDir);
-	float dBest = distMax + 1.234f;
+float blueprintHitscan::hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
+	float distMax = std::numeric_limits<float>::max();
+	float dBest = distMax;
 	for (unsigned int ix = 0; ix < this->collisionTriList.size(); ++ix) {
 		collisionTri t = this->collisionTriList[ix];
 		glm::vec2 isBary;
@@ -97,7 +98,7 @@ float blueprintHitscan::lineIntersectAtDistance(const glm::mat4 &proj, const glm
 				dBest = d;
 		}
 	}
-	return dBest <= distMax ? dBest : NAN;
+	return dBest < distMax ? dBest : NAN;
 }
 
 /** One surface of an "explosible" object that may fly away, spinning wildly
@@ -241,7 +242,7 @@ void explosible::renderExplosion(const glm::mat4 &model2screen, const glm::mat4 
 }
 
 void explosible::explode(explTraj *traj, glm::vec3 impact, float speed, float angSpeed) {
-	traj->clear();
+	traj->reset();
 	for (unsigned int ix = 0; ix < this->fragments.size(); ++ix) {
 		glm::vec3 dir = this->fragments[ix]->getCog() - impact;
 		dir = glm::normalize(dir);
@@ -267,9 +268,12 @@ void mgeng::instanced::finalize() {
 void mgeng::instanced::render(glm::mat4 proj, std::vector<glm::vec3> col) {
 	this->ex->render(proj, col);
 }
-void mgeng::instanced::renderExplosion(const instancedExplosion* traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb){
+void mgeng::instanced::renderExplosion(const instancedExplosion *traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb) {
 	this->ex->renderExplosion(model2screen, model2model, traj->traj, rgb);
 }
-void mgeng::instanced::explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed){
+void mgeng::instanced::explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed) {
 	this->ex->explode(traj->traj, impact, speed, angSpeed);
+}
+float mgeng::instanced::hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
+	return this->ex->hitscan(proj, lineOrig, lineDir);
 }

@@ -5,6 +5,7 @@
 #include "../srcEngine/instMan.h"
 #include <math.h> // NAN
 #include <iostream>
+#include "API.h"
 #define SINGLE_BUFFER
 #define TILE_BASED
 #define SUPERSAMPLING
@@ -12,7 +13,7 @@
 //#define NO_MOUSE
 //#define ENABLE_RAW_MOUSE
 
-#define SCANCODE_MB_FIRST (GLFW_KEY_LAST + 1) // first scancode used for mouse buttons
+//#define SCANCODE_MB_FIRST (GLFW_KEY_LAST + 1) // first scancode used for mouse buttons
 
 namespace engine {
 engine::engine() {
@@ -51,9 +52,9 @@ void engine::keyButtonCallback(int keycode, int action) {
 }
 
 void engine::mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
-	int scancode = button - GLFW_MOUSE_BUTTON_1 + SCANCODE_MB_FIRST;
+	int scancode = button - GLFW_MOUSE_BUTTON_1 + mgeng::keycodeMouseButton0;
 	engine *e = window2engine[window];
-	e->keyButtonCallback(button, action);
+	e->keyButtonCallback(scancode, action);
 }
 
 void engine::mouse_enterLeave_callback(GLFWwindow *window, int enterLeave) {
@@ -146,14 +147,14 @@ const mgeng::preDrawState* engine::preDraw() {
 
 	this->keycodeDeltaUp.clear();
 	this->keycodeDeltaDown.clear();
-    unsigned int screenWidthPrev = this->screenWidth;
-    unsigned int screenHeightPrev = this->screenHeight;
+	unsigned int screenWidthPrev = this->screenWidth;
+	unsigned int screenHeightPrev = this->screenHeight;
 
-    glfwPollEvents(); // invokes callbacks
+	glfwPollEvents(); // invokes callbacks
 
-    this->pdsCurr.screenSizeChanged = (this->screenWidth != screenWidthPrev) || (this->screenHeight != screenHeightPrev) || (this->pdsCurr.frame == 0);
+	this->pdsCurr.screenSizeChanged = (this->screenWidth != screenWidthPrev) || (this->screenHeight != screenHeightPrev) || (this->pdsCurr.frame == 0);
 
-    // === calculate deltas ===
+	// === calculate deltas ===
 	this->pdsCurr.time_s = glfwGetTime();
 	this->pdsCurr.deltaMouseX = 0;
 	this->pdsCurr.deltaMouseY = 0;
@@ -173,6 +174,7 @@ const mgeng::preDrawState* engine::preDraw() {
 	return &this->pdsCurr;
 }
 
+// TODO convert to scancode (e.g. to enable numlock)
 bool engine::testKeycodePressed(int keycode) {
 	return this->keycodeIsDown.find(keycode) != this->keycodeIsDown.end();
 }
@@ -262,3 +264,13 @@ void mgeng::root::shutdown() {
 void mgeng::root::getFps(float &fps) {
 	fps = this->eng->fps;
 }
+bool mgeng::root::testKeycodePressed(int keycode) {
+	return this->eng->testKeycodePressed(keycode);
+}
+bool mgeng::root::testKeycodePressEvt(int keycode) {
+	return this->eng->testKeycodePressEvt(keycode);
+}
+bool mgeng::root::testKeycodeReleaseEvt(int keycode) {
+	return this->eng->testKeycodeReleaseEvt(keycode);
+}
+

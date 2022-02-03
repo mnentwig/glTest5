@@ -36,17 +36,32 @@ mgeng::instanced* generateTestcube(mgeng::root *mgengRoot, float edgeLen, float 
 	return ex;
 }
 
-class appObj: private mgeng::noncopyable{
+class appObj: private mgeng::noncopyable {
 public:
-	appObj(mgeng::instanced* inst, std::vector<glm::vec3>* colDefault, std::vector<glm::vec3>* colHighlight){
-		this->inst=inst;
+	appObj(mgeng::instanced *inst, std::vector<glm::vec3> *colDefault, std::vector<glm::vec3> *colHighlight) {
+		this->inst = inst;
 		this->colDefault = colDefault;
 		this->colHighlight = colHighlight;
-	};
-	mgeng::instanced* inst;
-	std::vector<glm::vec3>* colDefault;
-	std::vector<glm::vec3>* colHighlight;
+	}
+	mgeng::instanced *inst;
+	std::vector<glm::vec3> *colDefault;
+	std::vector<glm::vec3> *colHighlight;
 	glm::mat4 model2world;
+	float explEndTime_s = 0;
+	enum state_e {
+		INACTIVE, ACTIVE, EXPLODING
+	};
+	state_e state = INACTIVE;
+	mgeng::instancedExplosion *expl = NULL;
+	mgeng::instancedExplosion* initExpl(mgeng::root *root, float explEndTime_s) {
+		if (this->expl == NULL)
+			this->expl = new mgeng::instancedExplosion(root);
+		this->explEndTime_s = explEndTime_s;
+		return this->expl;
+	}
+	~appObj() {
+		delete this->expl;
+	}
 };
 
 int main(void) {
@@ -79,9 +94,10 @@ int main(void) {
 	std::set<appObj*> appObjs;
 	for (float x = -10; x <= 10; ++x) {
 		for (float z = -11; z <= -10; ++z) {
-			appObj* o = new appObj(testcube, &colDefault, &colHighlight);
+			appObj *o = new appObj(testcube, &colDefault, &colHighlight);
 			o->model2world = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0, z));
 			o->inst = testcube;
+			o->state = appObj::state_e::ACTIVE;
 			appObjs.emplace(o);
 		}
 	}
@@ -112,14 +128,40 @@ int main(void) {
 
 		mgengRoot.beginDraw();
 		glm::mat4 viewInv = glm::inverse(view);
-		glm::vec4 viewerPos = viewInv * glm::vec4(0,0,0, 1);
-		glm::vec4 viewAt = viewInv * glm::vec4(0,0,-1, 1);
+		glm::vec4 viewerPos = viewInv * glm::vec4(0, 0, 0, 1);
+		glm::vec4 viewAt = viewInv * glm::vec4(0, 0, -1, 1);
 //glmPrint(viewerPos);
 
 		//float phi = pds->time_s * 2.0 * M_PI / 4;
 		//glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
-		for (appObj* obj:appObjs){
-			obj->inst->render(proj*obj->model2world, *obj->colDefault); // TODO make pointer arg
+		bool mouseDown = mgengRoot.testKeycodePressEvt(mgeng::keycodeMouseButton0);
+		glm::vec3 a = viewerPos;
+		glm::vec3 b = viewAt - viewerPos;
+		for (appObj *obj : appObjs) {
+			switch (obj->state) {
+			case appObj::state_e::ACTIVE: {
+				// === check selection ===
+				float dist = obj->inst->hitscan(obj->model2world, a, b);
+				bool hit = !std::isnan(dist);
+				obj->inst->render(proj * obj->model2world, hit ? *obj->colHighlight : *obj->colDefault); // TODO make pointer arg
+				if (hit & mouseDown) {
+					obj->initExpl(&mgengRoot, pds->time_s + 3.0f);
+					obj->inst->explode(obj->expl, glm::vec3(0, 0, 0), /*speed*/0.5f, /*angSpeed*/1.0f);
+					obj->state = appObj::state_e::EXPLODING;
+				}
+				break;
+			}
+			case appObj::state_e::EXPLODING: {
+				obj->inst->renderExplosion(obj->expl, proj * obj->model2world, glm::mat4(1.0f), *obj->colDefault); // TODO make pointer arg
+				obj->expl->clock(pds->deltaTime_s);
+				if (obj->explEndTime_s < pds->time_s)
+					obj->state = appObj::state_e::INACTIVE;
+				break;
+
+			}
+			default:
+				break;
+			}
 		}
 		//testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col);
 		//expl.clock(pds->deltaTime_s);

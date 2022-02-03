@@ -14,7 +14,7 @@ public:
 	glm::vec3 getDeltaPos(unsigned int fragIx) const;
 	glm::mat4 getRotation(unsigned int fragIx) const;
 	void clock(float deltaT_s);
-	void clear();
+	void reset();
 protected:
 	std::vector<glm::vec3> fragDirNorm;
 	std::vector<glm::vec3> posOffset;

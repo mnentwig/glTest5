@@ -24,7 +24,7 @@ glm::mat4 explTraj::getRotation(unsigned int fragIx) const {
 	return glm::rotate(glm::mat4(1.0f), phi, this->rotAxis[fragIx]);
 }
 
-void explTraj::clear() {
+void explTraj::reset() {
 	this->fragDirNorm.clear();
 	this->posOffset.clear();
 	this->speed.clear();

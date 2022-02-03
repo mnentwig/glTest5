@@ -24,7 +24,7 @@ class blueprintHitscan: public blueprint {
 public:
 	blueprintHitscan(instMan *im, unsigned int nCol);
 	void addHitscanSurface(const std::vector<glm::vec3> vertices);
-	float lineIntersectAtDistance(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir);
+	float hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir);
 protected:
 	typedef struct {
 	public:
@@ -45,7 +45,6 @@ public:
 	void closeFragment();
 	void renderExplosion(const glm::mat4 &model2screen, const glm::mat4 &model2model, const explTraj *traj, const std::vector<glm::vec3> &rgb);
 	void explode(explTraj *traj, glm::vec3 impact, float speed, float angSpeed);
-	bool lineIntersectCheck(const glm::mat4 &proj, const glm::vec3 &pos, const glm::vec3 &delta, float &distLimit) const;
 protected:
 	fragment *currentFragment;
 	std::vector<fragment*> fragments;
