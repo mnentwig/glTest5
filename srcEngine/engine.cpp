@@ -146,9 +146,14 @@ const mgeng::preDrawState* engine::preDraw() {
 
 	this->keycodeDeltaUp.clear();
 	this->keycodeDeltaDown.clear();
-	glfwPollEvents(); // invokes callbacks
+    unsigned int screenWidthPrev = this->screenWidth;
+    unsigned int screenHeightPrev = this->screenHeight;
 
-// === calculate deltas ===
+    glfwPollEvents(); // invokes callbacks
+
+    this->pdsCurr.screenSizeChanged = (this->screenWidth != screenWidthPrev) || (this->screenHeight != screenHeightPrev) || (this->pdsCurr.frame == 0);
+
+    // === calculate deltas ===
 	this->pdsCurr.time_s = glfwGetTime();
 	this->pdsCurr.deltaMouseX = 0;
 	this->pdsCurr.deltaMouseY = 0;

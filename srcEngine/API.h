@@ -63,6 +63,7 @@ public:
 	bool mouseInWindow = true;
 
 	long frame = 0;
+	bool screenSizeChanged;
 };
 
 class root: private noncopyable {

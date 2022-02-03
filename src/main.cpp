@@ -3,15 +3,12 @@
 #include <stdlib.h>
 #include <vector>
 #include <GLFW/glfw3.h> // for keycodes
-#include "../srcEngine/explosible.h"
 #include "../srcEngine/API.h"
-#include "../srcEngine/explTraj.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
-#include "../srcEngine/glTypes.h"
 
-mgeng::instanced* generateTestcube(mgeng::root* mgengRoot, float edgeLen, float width) {
+mgeng::instanced* generateTestcube(mgeng::root *mgengRoot, float edgeLen, float width) {
 	mgeng::instanced *ex = new mgeng::instanced(mgengRoot, 2);
 	float e = 0.5 * edgeLen;
 	std::vector<glm::vec3> v1;
@@ -44,28 +41,41 @@ int main(void) {
   assert(0);
 #endif
 
-  mgeng::root mgengRoot;
+	mgeng::root mgengRoot;
 	mgengRoot.startup();
 
 	mgeng::instanced *testcube = generateTestcube(&mgengRoot, 0.8f, 0.05f);
-	mgeng::observer* o = new mgeng::observer(&mgengRoot);
-	o->setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
-	o->setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
-	unsigned int screenWidth;
-	unsigned int screenHeight;
-	mgengRoot.getScreenWidthHeight(screenWidth, screenHeight);
-	glm::mat4 persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
-	float nextFpsTime = -1;
-	std::vector<glm::vec3> col;
-	col.push_back(glm::vec3 (0, 1, 0));
-	col.push_back(glm::vec3 (0.1f, 0.1f, 0.1f));
 
 	mgeng::instancedExplosion expl(&mgengRoot);
 	testcube->explode(&expl, glm::vec3(0, 0, 0), 0.5f, 1.0f);
+
+	mgeng::observer *o = new mgeng::observer(&mgengRoot);
+	o->setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
+	o->setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
+
+	// === projection ===
+	unsigned int screenWidth;
+	unsigned int screenHeight;
+	glm::mat4 persp;
+	// === color scheme ===
+	std::vector<glm::vec3> col;
+	col.push_back(glm::vec3(0, 1, 0));
+	col.push_back(glm::vec3(0.1f, 0.1f, 0.1f));
+
+	// === main loop ===
+	float nextFpsTime = -1;
 	while (true) {
 		const mgeng::preDrawState *pds = mgengRoot.preDraw();
 		if (pds->windowClose)
 			break;
+
+		// === update screen size ===
+		// note: flag is always true on first frame (=> first preDraw)
+		if (pds->screenSizeChanged) {
+			mgengRoot.getScreenWidthHeight(screenWidth, screenHeight);
+			persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
+		}
+
 		o->ctrlInput(pds);
 
 		mgengRoot.beginDraw();
@@ -87,11 +97,11 @@ int main(void) {
 
 		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3, -10));
 		glm::mat4 projT = proj * v;
-		testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col );
+		testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col);
 		expl.clock(pds->deltaTime_s);
 
 		mgengRoot.endDraw();
-		if (pds->time_s > nextFpsTime){
+		if (pds->time_s > nextFpsTime) {
 			float fps;
 			mgengRoot.getFps(fps);
 			std::cout << fps << " fps\n";
