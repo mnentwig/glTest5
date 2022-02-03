@@ -10,7 +10,7 @@ class explTraj;
 namespace engine {
 class blueprint {
 public:
-	blueprint(instMan *im, unsigned int nCol);
+	blueprint(instMan *im, unsigned int nCol, bool isOverlay);
 	void finalize();
 	void render(const glm::mat4 &proj, const std::vector<glm::vec3> &rgb);
 protected:
@@ -22,9 +22,9 @@ protected:
 
 class blueprintHitscan: public blueprint {
 public:
-	blueprintHitscan(instMan *im, unsigned int nCol);
+	blueprintHitscan(instMan *im, unsigned int nCol, bool isOverlay);
 	void addHitscanSurface(const std::vector<glm::vec3> vertices);
-	float hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir);
+	float hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) const;
 protected:
 	typedef struct {
 	public:
@@ -39,7 +39,7 @@ protected:
 class fragment;
 class explosible: public blueprintHitscan {
 public:
-	explosible(instMan *im, unsigned int nCol);
+	explosible(instMan *im, unsigned int nCol, bool isOverlay);
 	void generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
 	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
 	void closeFragment();

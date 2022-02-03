@@ -11,7 +11,7 @@
 #include <glm/gtx/transform.hpp>
 
 mgeng::instanced* generateTestcube(mgeng::root *mgengRoot, float edgeLen, float width) {
-	mgeng::instanced *ex = new mgeng::instanced(mgengRoot, 2);
+	mgeng::instanced *ex = new mgeng::instanced(mgengRoot, /*nCols*/2, /*isOverlay*/false);
 	float e = 0.5 * edgeLen;
 	std::vector<glm::vec3> v1;
 	v1.push_back(glm::vec3(-e, -e, -e));
@@ -36,6 +36,34 @@ mgeng::instanced* generateTestcube(mgeng::root *mgengRoot, float edgeLen, float 
 	return ex;
 }
 
+mgeng::instanced* generateCrosshairs(mgeng::root *mgengRoot) {
+	mgeng::instanced *ex = new mgeng::instanced(mgengRoot, /*nCols*/1, /*isOverlay*/true);
+	float a = 0.2f;
+	float b = 5;
+	std::vector<glm::vec3> vv;
+	vv.push_back(glm::vec3(a, a, 0));
+	vv.push_back(glm::vec3(a, b, 0));
+	vv.push_back(glm::vec3(b, a, 0));
+
+	float width = 0.15f;
+	bool hitscanEnable = false;
+	ex->generateOutlinedShape(vv, width, 0, /*invalid color*/999, hitscanEnable);
+
+	for (auto it = vv.begin(); it != vv.end(); ++it)
+		it->y *= -1;
+	ex->generateOutlinedShape(vv, width, 0, /*invalid color*/999, hitscanEnable);
+
+	for (auto it = vv.begin(); it != vv.end(); ++it)
+		it->x *= -1;
+	ex->generateOutlinedShape(vv, width, 0, /*invalid color*/999, hitscanEnable);
+
+	for (auto it = vv.begin(); it != vv.end(); ++it)
+		it->y *= -1;
+	ex->generateOutlinedShape(vv, width, 0, /*invalid color*/999, hitscanEnable);
+	ex->finalize();
+	return ex;
+}
+
 class appObj: private mgeng::noncopyable {
 public:
 	appObj(mgeng::instanced *inst, std::vector<glm::vec3> *colDefault, std::vector<glm::vec3> *colHighlight) {
@@ -55,7 +83,7 @@ public:
 	mgeng::instancedExplosion *expl = NULL;
 	mgeng::instancedExplosion* initExpl(mgeng::root *root, float explEndTime_s) {
 		if (this->expl == NULL)
-			this->expl = new mgeng::instancedExplosion(root);
+			this->expl = new mgeng::instancedExplosion();
 		this->explEndTime_s = explEndTime_s;
 		return this->expl;
 	}
@@ -63,7 +91,6 @@ public:
 		delete this->expl;
 	}
 };
-
 int main(void) {
 	srand(0);
 #ifdef NDEBUG
@@ -75,8 +102,9 @@ int main(void) {
 	mgengRoot.startup();
 
 	mgeng::instanced *testcube = generateTestcube(&mgengRoot, 0.8f, 0.05f);
+	mgeng::instanced *crosshairs = generateCrosshairs(&mgengRoot);
 
-	mgeng::instancedExplosion expl(&mgengRoot);
+	mgeng::instancedExplosion expl;
 	testcube->explode(&expl, glm::vec3(0, 0, 0), 0.5f, 1.0f);
 
 	mgeng::observer *o = new mgeng::observer(&mgengRoot);
@@ -90,6 +118,9 @@ int main(void) {
 	std::vector<glm::vec3> colHighlight;
 	colHighlight.push_back(glm::vec3(0.4, 0.4, 0.4));
 	colHighlight.push_back(glm::vec3(0.2f, 0.2f, 0.2f));
+	std::vector<glm::vec3> colCrosshairs;
+	colCrosshairs.push_back(glm::vec3(1, 1, 1));
+	glm::mat4 projCrosshairs;
 
 	std::set<appObj*> appObjs;
 	for (float x = -10; x <= 10; ++x) {
@@ -119,6 +150,7 @@ int main(void) {
 		if (pds->screenSizeChanged) {
 			mgengRoot.getScreenWidthHeight(screenWidth, screenHeight);
 			persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
+			projCrosshairs = persp * glm::translate (glm::mat4 (1.0f), glm::vec3 (0, 0, -50));
 		}
 
 		// === camera controls ===
@@ -130,10 +162,7 @@ int main(void) {
 		glm::mat4 viewInv = glm::inverse(view);
 		glm::vec4 viewerPos = viewInv * glm::vec4(0, 0, 0, 1);
 		glm::vec4 viewAt = viewInv * glm::vec4(0, 0, -1, 1);
-//glmPrint(viewerPos);
 
-		//float phi = pds->time_s * 2.0 * M_PI / 4;
-		//glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
 		bool mouseDown = mgengRoot.testKeycodePressEvt(mgeng::keycodeMouseButton0);
 		glm::vec3 a = viewerPos;
 		glm::vec3 b = viewAt - viewerPos;
@@ -143,7 +172,8 @@ int main(void) {
 				// === check selection ===
 				float dist = obj->inst->hitscan(obj->model2world, a, b);
 				bool hit = !std::isnan(dist);
-				obj->inst->render(proj * obj->model2world, hit ? *obj->colHighlight : *obj->colDefault); // TODO make pointer arg
+				glm::mat4 projT = proj * obj->model2world;
+				obj->inst->render(projT, hit ? *obj->colHighlight : *obj->colDefault);
 				if (hit & mouseDown) {
 					obj->initExpl(&mgengRoot, pds->time_s + 3.0f);
 					obj->inst->explode(obj->expl, glm::vec3(0, 0, 0), /*speed*/0.5f, /*angSpeed*/1.0f);
@@ -163,8 +193,8 @@ int main(void) {
 				break;
 			}
 		}
-		//testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col);
-		//expl.clock(pds->deltaTime_s);
+
+		crosshairs->render(projCrosshairs, colCrosshairs);
 
 		mgengRoot.endDraw();
 		if (pds->time_s > nextFpsTime) {

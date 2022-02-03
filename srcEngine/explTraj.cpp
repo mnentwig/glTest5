@@ -41,8 +41,7 @@ void explTraj::clock(float deltaT_s) {
 }
 } // namespace
 
-//TODO add const below to params
-mgeng::instancedExplosion::instancedExplosion(mgeng::root *root) {
+mgeng::instancedExplosion::instancedExplosion() {
 	this->traj = new engine::explTraj();
 }
 

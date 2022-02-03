@@ -14,9 +14,9 @@
 #include <glm/gtx/intersect.hpp>
 
 namespace engine {
-blueprint::blueprint(instMan *im, unsigned int nCol) {
+blueprint::blueprint(instMan *im, unsigned int nCol, bool isOverlay) {
 	this->im = im;
-	this->imHandle = im->openHandle(nCol, false);
+	this->imHandle = im->openHandle(nCol, isOverlay);
 }
 
 void blueprint::finalize() {
@@ -30,8 +30,8 @@ void blueprint::render(const glm::mat4 &proj, const std::vector<glm::vec3> &rgb)
 	this->im->renderInst(this->imHandle, proj, rgb);
 }
 
-blueprintHitscan::blueprintHitscan(instMan *im, unsigned int nCol) :
-		blueprint(im, nCol) {
+blueprintHitscan::blueprintHitscan(instMan *im, unsigned int nCol, bool isOverlay) :
+		blueprint(im, nCol, isOverlay) {
 }
 
 void blueprintHitscan::addHitscanSurface(const std::vector<glm::vec3> vertices) {
@@ -86,7 +86,7 @@ static glm::vec3 matMul(const glm::mat4 &m, const glm::vec3 &v) {
 	return glm::vec3(m * glm::vec4(v, 1.0f));
 }
 
-float blueprintHitscan::hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
+float blueprintHitscan::hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) const {
 	float distMax = std::numeric_limits<float>::max();
 	float dBest = distMax;
 	for (unsigned int ix = 0; ix < this->collisionTriList.size(); ++ix) {
@@ -156,8 +156,8 @@ protected:
 	bool closed = false;
 };
 
-explosible::explosible(instMan *im, unsigned int nCol) :
-		blueprintHitscan(im, nCol) {
+explosible::explosible(instMan *im, unsigned int nCol, bool isOverlay) :
+		blueprintHitscan(im, nCol, isOverlay) {
 	std::vector<unsigned int> startIx;
 	for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
 		startIx.push_back(this->im->getIsti(this->imHandle, ixCol)->getTriCount());
@@ -166,8 +166,6 @@ explosible::explosible(instMan *im, unsigned int nCol) :
 }
 
 void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
-	instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
-	instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
 	if (hitscanEnable) {
 		this->addHitscanSurface(vertices);
 	}
@@ -176,8 +174,15 @@ void explosible::generateOutlinedShape(std::vector<glm::vec3> vertices, float wi
 	std::vector<glm::vec3> vertFill;
 	std::vector<mgeng::triIx16> triFill;
 	outliner::generateOutlinedShape(vertices, width, vertOutline, triOutline, vertFill, triFill);
-	isOutline->pushTris(vertOutline, triOutline, /*rebaseZeroBasedIndices*/true);
-	isFill->pushTris(vertFill, triFill, /*rebaseZeroBasedIndices*/true);
+	if (ixColOutline < this->im->getNCol(this->imHandle)) {
+		instStackTriInst *isOutline = this->im->getIsti(this->imHandle, ixColOutline);
+		isOutline->pushTris(vertOutline, triOutline, /*rebaseZeroBasedIndices*/true);
+	}
+	if (ixColFill < this->im->getNCol(this->imHandle)) {
+		instStackTriInst *isFill = this->im->getIsti(this->imHandle, ixColFill);
+		isFill->pushTris(vertFill, triFill, /*rebaseZeroBasedIndices*/true);
+	}
+	// TODO omit on hitscan disabled? Rename to hitscanVertex?
 	for (unsigned int ix = 0; ix < vertices.size(); ++ix)
 		this->currentFragment->addVertex(vertices[ix]);
 	this->closeFragment();
@@ -252,10 +257,10 @@ void explosible::explode(explTraj *traj, glm::vec3 impact, float speed, float an
 }
 } //namespace
 
-mgeng::instanced::instanced(mgeng::root *root, unsigned int nCol) {
-	this->ex = new engine::explosible(&root->eng->im, nCol);
+mgeng::instanced::instanced(mgeng::root *root, unsigned int nCol, bool isOverlay) {
+	this->ex = new engine::explosible(&root->eng->im, nCol, isOverlay);
 }
-//TODO add const below to params
+
 void mgeng::instanced::generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
 	this->ex->generateOutlinedShape(vertices, width, ixColOutline, ixColFill, hitscanEnable);
 }
@@ -265,7 +270,7 @@ void mgeng::instanced::generateOutlinedBody(std::vector<glm::vec3> vertices1, st
 void mgeng::instanced::finalize() {
 	this->ex->finalize();
 }
-void mgeng::instanced::render(glm::mat4 proj, std::vector<glm::vec3> col) {
+void mgeng::instanced::render(const glm::mat4 &proj, const std::vector<glm::vec3> &col) {
 	this->ex->render(proj, col);
 }
 void mgeng::instanced::renderExplosion(const instancedExplosion *traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb) {
@@ -274,6 +279,6 @@ void mgeng::instanced::renderExplosion(const instancedExplosion *traj, const glm
 void mgeng::instanced::explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed) {
 	this->ex->explode(traj->traj, impact, speed, angSpeed);
 }
-float mgeng::instanced::hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) {
+float mgeng::instanced::hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) const {
 	return this->ex->hitscan(proj, lineOrig, lineDir);
 }

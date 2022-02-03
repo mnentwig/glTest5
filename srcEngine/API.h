@@ -101,22 +101,22 @@ protected:
 
 class instanced: private noncopyable {
 public:
-	instanced(root*, unsigned int nCols);
+	instanced(root*, unsigned int nCols, bool isOverlay);
 	~instanced();
 	void generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
 	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
 	void finalize();
-	void render(glm::mat4 proj, std::vector<glm::vec3> col);
+	void render(const glm::mat4& proj, const std::vector<glm::vec3>& col);
 	void explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed);
 	void renderExplosion(const instancedExplosion* traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb);
-	float hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir);
+	float hitscan(const glm::mat4 &proj, const glm::vec3 &lineOrig, const glm::vec3 &lineDir) const;
 protected:
 	engine::explosible *ex;
 };
 
 class instancedExplosion: private noncopyable {
 public:
-	explicit instancedExplosion(root*);
+	instancedExplosion();
 	void clock(float deltaT_s);
 protected:
 	engine::explTraj *traj;
