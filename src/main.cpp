@@ -4,6 +4,8 @@
 #include <vector>
 #include <GLFW/glfw3.h> // for keycodes
 #include "../srcEngine/API.h"
+#include "../srcEngine/glmPrint.hpp"
+#include <set>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -34,6 +36,19 @@ mgeng::instanced* generateTestcube(mgeng::root *mgengRoot, float edgeLen, float 
 	return ex;
 }
 
+class appObj: private mgeng::noncopyable{
+public:
+	appObj(mgeng::instanced* inst, std::vector<glm::vec3>* colDefault, std::vector<glm::vec3>* colHighlight){
+		this->inst=inst;
+		this->colDefault = colDefault;
+		this->colHighlight = colHighlight;
+	};
+	mgeng::instanced* inst;
+	std::vector<glm::vec3>* colDefault;
+	std::vector<glm::vec3>* colHighlight;
+	glm::mat4 model2world;
+};
+
 int main(void) {
 	srand(0);
 #ifdef NDEBUG
@@ -53,14 +68,28 @@ int main(void) {
 	o->setPitchYawRollKeys(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT, 'Q', 'E');
 	o->setMovementKeys(GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_PAGE_UP, GLFW_KEY_PAGE_DOWN);
 
-	// === projection ===
-	unsigned int screenWidth;
-	unsigned int screenHeight;
-	glm::mat4 persp;
 	// === color scheme ===
-	std::vector<glm::vec3> col;
-	col.push_back(glm::vec3(0, 1, 0));
-	col.push_back(glm::vec3(0.1f, 0.1f, 0.1f));
+	std::vector<glm::vec3> colDefault;
+	colDefault.push_back(glm::vec3(0, 1, 0));
+	colDefault.push_back(glm::vec3(0.1f, 0.1f, 0.1f));
+	std::vector<glm::vec3> colHighlight;
+	colHighlight.push_back(glm::vec3(0.4, 0.4, 0.4));
+	colHighlight.push_back(glm::vec3(0.2f, 0.2f, 0.2f));
+
+	std::set<appObj*> appObjs;
+	for (float x = -10; x <= 10; ++x) {
+		for (float z = -11; z <= -10; ++z) {
+			appObj* o = new appObj(testcube, &colDefault, &colHighlight);
+			o->model2world = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0, z));
+			o->inst = testcube;
+			appObjs.emplace(o);
+		}
+	}
+
+	// === projection ===
+	unsigned int screenWidth = 0;
+	unsigned int screenHeight = 0;
+	glm::mat4 persp;
 
 	// === main loop ===
 	float nextFpsTime = -1;
@@ -76,29 +105,24 @@ int main(void) {
 			persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
 		}
 
+		// === camera controls ===
 		o->ctrlInput(pds);
-
-		mgengRoot.beginDraw();
 		const glm::mat4 view = o->getView();
-
 		glm::mat4 proj = persp * view;
 
-		float phi = pds->time_s * 2.0 * M_PI / 4;
+		mgengRoot.beginDraw();
+		glm::mat4 viewInv = glm::inverse(view);
+		glm::vec4 viewerPos = viewInv * glm::vec4(0,0,0, 1);
+		glm::vec4 viewAt = viewInv * glm::vec4(0,0,-1, 1);
+//glmPrint(viewerPos);
 
-		glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
-
-		for (float x = -10; x <= 10; ++x) {
-			for (float z = -11; z <= -10; ++z) {
-				glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0, z)) * rot;
-				glm::mat4 projT = proj * v;
-				testcube->render(projT, col);
-			}
+		//float phi = pds->time_s * 2.0 * M_PI / 4;
+		//glm::mat4 rot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(0, 1, 0));
+		for (appObj* obj:appObjs){
+			obj->inst->render(proj*obj->model2world, *obj->colDefault); // TODO make pointer arg
 		}
-
-		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3, -10));
-		glm::mat4 projT = proj * v;
-		testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col);
-		expl.clock(pds->deltaTime_s);
+		//testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col);
+		//expl.clock(pds->deltaTime_s);
 
 		mgengRoot.endDraw();
 		if (pds->time_s > nextFpsTime) {
