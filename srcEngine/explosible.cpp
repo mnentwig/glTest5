@@ -223,16 +223,16 @@ void explosible::closeFragment() {
 	this->currentFragment = new fragment(/*becomes new frag startIx*/endIx); // TODO maybe open-/close fragment explicitly?
 }
 
-void explosible::renderExplosion(const glm::mat4 &model2screen, const glm::mat4 &model2model, const explTraj &traj, const std::vector<glm::vec3> &rgb) {
+void explosible::renderExplosion(const glm::mat4 &model2screen, const glm::mat4 &model2model, const explTraj *traj, const std::vector<glm::vec3> &rgb) {
 	unsigned int nCol = this->im->getNCol(this->imHandle);
 	for (unsigned int ix = 0; ix < this->fragments.size(); ++ix) {
 		fragment *f = this->fragments[ix];
-		glm::mat4 model2model_expl = glm::translate(glm::mat4(1.0f), traj.getDeltaPos(ix));
+		glm::mat4 model2model_expl = glm::translate(glm::mat4(1.0f), traj->getDeltaPos(ix));
 		glm::mat4 tot = model2screen;
 		tot *= model2model_expl;
 		tot *= model2model;
 		tot *= f->getUncenterCog();
-		tot *= traj.getRotation(ix);
+		tot *= traj->getRotation(ix);
 		tot *= f->getCenterCog();
 		for (unsigned int ixCol = 0; ixCol < nCol; ++ixCol) {
 			this->im->getIsti(this->imHandle, ixCol)->run1(f->startIx[ixCol], f->endIx[ixCol], tot, rgb[ixCol]);
@@ -266,4 +266,10 @@ void mgeng::instanced::finalize() {
 }
 void mgeng::instanced::render(glm::mat4 proj, std::vector<glm::vec3> col) {
 	this->ex->render(proj, col);
+}
+void mgeng::instanced::renderExplosion(const instancedExplosion* traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb){
+	this->ex->renderExplosion(model2screen, model2model, traj->traj, rgb);
+}
+void mgeng::instanced::explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed){
+	this->ex->explode(traj->traj, impact, speed, angSpeed);
 }

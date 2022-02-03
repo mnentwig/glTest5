@@ -32,6 +32,7 @@ class explTraj;
 namespace mgeng {
 class observer;
 class instanced;
+class instancedExplosion;
 
 class noncopyable {
 protected:
@@ -102,6 +103,8 @@ public:
 	void generateOutlinedBody(std::vector<glm::vec3> vertices1, std::vector<glm::vec3> vertices2, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable);
 	void finalize();
 	void render(glm::mat4 proj, std::vector<glm::vec3> col);
+	void explode(mgeng::instancedExplosion *traj, glm::vec3 impact, float speed, float angSpeed);
+	void renderExplosion(const instancedExplosion* traj, const glm::mat4 &model2screen, const glm::mat4 &model2model, const std::vector<glm::vec3> &rgb);
 protected:
 	engine::explosible *ex;
 };
@@ -112,5 +115,6 @@ public:
 	void clock(float deltaT_s);
 protected:
 	engine::explTraj *traj;
+	friend instanced;
 };
 } // namespace

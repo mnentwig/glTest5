@@ -60,8 +60,8 @@ int main(void) {
 	col.push_back(glm::vec3 (0, 1, 0));
 	col.push_back(glm::vec3 (0.1f, 0.1f, 0.1f));
 
-	//explTraj* et = new explTraj();
-	//testcube->explode(et, glm::vec3(0, 0, 0), 0.5f, 1.0f);
+	mgeng::instancedExplosion expl(&mgengRoot);
+	testcube->explode(&expl, glm::vec3(0, 0, 0), 0.5f, 1.0f);
 	while (true) {
 		const mgeng::preDrawState *pds = mgengRoot.preDraw();
 		if (pds->windowClose)
@@ -85,10 +85,10 @@ int main(void) {
 			}
 		}
 
-		//glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3, -10));
-		//glm::mat4 projT = proj * v;
-		//testcube->renderExplosion(projT, glm::mat4(1.0f), *et, col );
-		//et->clock(pds->deltaTime_s);
+		glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0, 3, -10));
+		glm::mat4 projT = proj * v;
+		testcube->renderExplosion(&expl, projT, glm::mat4(1.0f), col );
+		expl.clock(pds->deltaTime_s);
 
 		mgengRoot.endDraw();
 		if (pds->time_s > nextFpsTime){
