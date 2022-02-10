@@ -21,6 +21,10 @@ void glmPrint(glm::mat4 m){
   printf("-----------------\n");
 }
 
+void glmPrint(glm::vec2 v){
+  printf("%01.6f\t%01.6f\n",v.x, v.y);
+}
+
 void glmPrint(glm::vec3 v){
   printf("%01.6f\t%01.6f\t%01.6f\n",v.x, v.y, v.z);
 }
