@@ -27,6 +27,12 @@ public:
 		*v1 = &this->vertices[std::get<1>(t)];
 		*v2 = &this->vertices[std::get<2>(t)];
 	}
+	void getVertexIx(triIx_t triIx, vertexIx_t &v0, vertexIx_t &v1, vertexIx_t &v2) {
+		const tri_t &t = this->tris[triIx];
+		v0 = std::get<0>(t);
+		v1 = std::get<1>(t);
+		v2 = std::get<2>(t);
+	}
 };
 
 class antCrawlerSurface: public surface {
@@ -131,11 +137,52 @@ public:
 		this->pos_2d = this->m3dTo2d * pos_3d;
 	}
 
-	glm::vec3& getPos() {
+	const glm::vec3& getPos() {
 		this->posCache_3d = this->m2dTo3d * glm::vec3(this->pos_2d, this->commonZ);
 		return this->posCache_3d;
 	}
 
+	static bool lineLineIntersection(const glm::vec2 &p1, const glm::vec2 &p2, const glm::vec2 &p3, const glm::vec2 &p4, glm::vec2 &out_tu) {
+		const float dx13 = (p1.x - p3.x);
+		const float dy13 = (p1.y - p3.y);
+		const float dy34 = (p3.y - p4.y);
+		const float dx34 = (p3.x - p4.x);
+		const float dx12 = (p1.x - p2.x);
+		const float dy12 = (p1.y - p2.y);
+		float denom = dx12 * dy34 - dy12 * dx34;
+		float num_t = dx13 * dy34 - dy13 * dx34;
+		float num_u = dx13 * dy12 - dy13 * dx12;
+		if (fabs(denom) <= std::numeric_limits<float>::epsilon())
+			return false;
+		float t = num_t / denom;
+		if ((t < 0) || (t > 1))
+			return false;
+		float u = num_u / denom;
+		if ((u < 0) || (u > 1))
+			return false;
+		out_tu = glm::vec2(t, u);
+		return true;
+	}
+
+	bool move(const glm::vec3 delta) { // return quat?
+		glm::vec2 dir_2d = this->m3dTo2d * delta;
+		while (true) {
+			glm::vec2 newPos_2d = this->pos_2d + dir_2d;
+			glm::vec2 out_tu;
+			if (lineLineIntersection(v0_2d, v1_2d, this->pos_2d, newPos_2d, out_tu)) {
+				std::cout << "01\n";
+			}
+			if (lineLineIntersection(v1_2d, v2_2d, this->pos_2d, newPos_2d, out_tu)) {
+				glm::vec2 is1 = (1.0f-out_tu[0]) * v1_2d + out_tu[0] * v2_2d;
+				std::cout << "12\n";
+				glmPrint(is1);
+			}
+			if (lineLineIntersection(v2_2d, v0_2d, this->pos_2d, newPos_2d, out_tu)) {
+				std::cout << "20\n";
+			}
+			return true;
+		}
+	}
 protected:
 	antCrawlerSurface *surface;
 	unsigned int currentTriIx = 0;
@@ -143,8 +190,12 @@ protected:
 	glm::mat3 m2dTo3d;
 	glm::vec2 pos_2d;
 	glm::vec2 v0_2d;
+	surface::vertexIx_t v0_ix;
 	glm::vec2 v1_2d;
+	surface::vertexIx_t v1_ix;
 	glm::vec2 v2_2d;
+	surface::vertexIx_t v2_ix;
+
 	glm::vec3 posCache_3d;
 	float commonZ;
 };
@@ -152,6 +203,8 @@ protected:
 int main(void) {
 	engine::myAntCrawlerSurface s;
 	engine::antCrawler a(&s, 0.4, 0.4);
+	a.move(glm::vec3(10, 0, 0));
+
 	std::vector<std::tuple<int, int, int>> test;
 	std::tuple<int, int, int> abc = { 1, 2, 3 };
 	test.push_back(abc);
