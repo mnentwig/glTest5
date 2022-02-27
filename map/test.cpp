@@ -48,6 +48,10 @@ class antCrawlerSurface: public surface {
 			this->registerEdge(eh12, triIx);
 			this->registerEdge(eh20, triIx);
 		}
+		bool getNeighbor(vertexIx_t va, vertexIx_t vb, triIx_t startTri, triIx_t& neighborTri) const {
+			edgeHash_t eh = getEdgeHash(va, vb);
+			xxxx hier weiter
+		}
 	protected:
 		std::map<edgeHash_t, edge_t> table;
 		void registerEdge(edgeHash_t eh, triIx_t triIx) {
@@ -99,30 +103,72 @@ class antCrawler {
 public:
 	antCrawler(antCrawlerSurface *surface, float xInit, float zInit) {
 		this->surface = surface;
+
+		unsigned int droppedTriIx = this->locateTriByVerticalDrop(xInit, zInit);
+		this->setTri(droppedTriIx);
+		this->pos_2d = this->getPosByVerticalDrop(xInit, zInit);
+	}
+
+	const glm::vec3& getPos() {
+		this->posCache_3d = this->m2dTo3d * glm::vec3(this->pos_2d, this->commonZ);
+		return this->posCache_3d;
+	}
+
+	void move(const glm::vec3 delta) { // return quat?
+		glm::vec2 dir_2d = this->m3dTo2d * delta;
+		while (true) {
+			glm::vec2 newPos_2d = this->pos_2d + dir_2d;
+
+			// === check whether the movement crosses an edge (leaves the triangle) ===
+			bool edgeCrossed = false;
+			float remLengthParallel;
+			float remLengthPerpendicular;
+			surface::vertexIx_t va_ix;
+			surface::vertexIx_t vb_ix;
+
+			if (moveOverEdge(this->v0_2d, this->v1_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)){
+				edgeCrossed=true;
+				va_ix = this->v0_ix;
+				vb_ix = this->v1_ix;
+				std::cout << "01\n";
+			} else if (moveOverEdge(this->v1_2d, this->v2_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)){
+				edgeCrossed=true;
+				va_ix = this->v1_ix;
+				vb_ix = this->v2_ix;
+				std::cout << "12\n";
+			} else if (moveOverEdge(this->v2_2d, this->v0_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)){
+				edgeCrossed=true;
+				va_ix = this->v2_ix;
+				vb_ix = this->v0_ix;
+				std::cout << "20\n";
+			}
+
+			if (!edgeCrossed){
+				this->pos_2d = newPos_2d;
+				return;
+			}
+		}
+	}
+
+protected:
+	unsigned int locateTriByVerticalDrop(float xInit, float zInit) const {
 		const glm::vec3 *v0;
 		const glm::vec3 *v1;
 		const glm::vec3 *v2;
 		for (unsigned int triIx = 0; triIx < this->surface->tris.size(); ++triIx) {
 			this->surface->getTri(triIx, &v0, &v1, &v2);
 			if (geomUtils2d::pointInTriangleNoY(glm::vec3(xInit, 0, zInit), *v0, *v1, *v2)) {
-				this->currentTriIx = triIx;
-				goto triLocated;
+				return triIx;
 			}
 		}
-		assert(0 && "init point does not drop vertically onto triangle");
-		triLocated: const glm::vec3 normalTri = glm::normalize(glm::cross(*v1 - *v0, *v2 - *v0));
-		const glm::vec3 normalNoZ = glm::vec3(0, 0, 1);
-		const glm::vec3 axis = glm::normalize(glm::cross(normalTri, normalNoZ));
-		const float phi_rad = std::acos(glm::dot(normalTri, normalNoZ));
-		this->m3dTo2d = glm::rotate(glm::mat4(1.0f), phi_rad, axis);
-		this->m2dTo3d = glm::inverse(this->m3dTo2d);
+		throw new std::runtime_error("failed to locate tri by vertical drop");
+	}
 
-		// === transform 3d triangle to 2d with constant z ===
-		glm::vec3 v0_2dPlusZ = this->m3dTo2d * (*v0);
-		this->v0_2d = v0_2dPlusZ;
-		this->commonZ = v0_2dPlusZ.z; // keep z from one arbitrary vertex
-		this->v1_2d = this->m3dTo2d * (*v1); // other vertices z will be identical, no need to calculate
-		this->v2_2d = this->m3dTo2d * (*v2);
+	glm::vec2 getPosByVerticalDrop(float xInit, float zInit) const {
+		const glm::vec3 *v0;
+		const glm::vec3 *v1;
+		const glm::vec3 *v2;
+		this->surface->getTri(this->currentTriIx, &v0, &v1, &v2);
 
 		// Need all three coordinates of the initial point to transform to 2d
 		// Note: The "ray" in intersectRayTriangle is bidirectional.
@@ -134,12 +180,37 @@ public:
 		bool hit = glm::intersectRayTriangle(rayOrig, rayDir, *v0, *v1, *v2, baryPosition, dist);
 		std::cout << hit << " " << dist << "\n";
 		glm::vec3 pos_3d(xInit, dist, zInit);
-		this->pos_2d = this->m3dTo2d * pos_3d;
+		return this->m3dTo2d * pos_3d;
 	}
 
-	const glm::vec3& getPos() {
-		this->posCache_3d = this->m2dTo3d * glm::vec3(this->pos_2d, this->commonZ);
-		return this->posCache_3d;
+	void setTri(unsigned int triIx){
+		this->currentTriIx = triIx;
+
+		const glm::vec3 *v0;
+		const glm::vec3 *v1;
+		const glm::vec3 *v2;
+		this->surface->getTri(triIx, &v0, &v1, &v2);
+
+		this->surface->getVertexIx(triIx, this->v0_ix, this->v1_ix, this->v2_ix);
+		// === normal vector in 3d ===
+		const glm::vec3 normalTri = glm::normalize(glm::cross(*v1 - *v0, *v2 - *v0));
+		// === targeted normal vector in 2d when z is eliminated ===
+		const glm::vec3 normalNoZ = glm::vec3(0, 0, 1);
+		// === rotation axis to rotate normalTri into normalNoZ ===
+		const glm::vec3 axis = glm::normalize(glm::cross(normalTri, normalNoZ));
+		// === rotation angle to rotate normalTri into normalNoZ ===
+		const float phi_rad = std::acos(glm::dot(normalTri, normalNoZ));
+		// === rotation matrix to rotate normalTri into normalNoZ ===
+		this->m3dTo2d = glm::rotate(glm::mat4(1.0f), phi_rad, axis);
+		// === rotation matrix to rotate normalNoZ into normalTri ===
+		this->m2dTo3d = glm::inverse(this->m3dTo2d);
+
+		// === transform 3d triangle to 2d with constant z ===
+		glm::vec3 v0_2dPlusZ = this->m3dTo2d * (*v0);
+		this->v0_2d = v0_2dPlusZ;
+		this->commonZ = v0_2dPlusZ.z; // keep z from one arbitrary vertex
+		this->v1_2d = this->m3dTo2d * (*v1); // other vertices z will be identical, no need to calculate
+		this->v2_2d = this->m3dTo2d * (*v2);
 	}
 
 	static bool lineLineIntersection(const glm::vec2 &p1, const glm::vec2 &p2, const glm::vec2 &p3, const glm::vec2 &p4, glm::vec2 &out_tu) {
@@ -164,25 +235,25 @@ public:
 		return true;
 	}
 
-	bool move(const glm::vec3 delta) { // return quat?
-		glm::vec2 dir_2d = this->m3dTo2d * delta;
-		while (true) {
-			glm::vec2 newPos_2d = this->pos_2d + dir_2d;
-			glm::vec2 out_tu;
-			if (lineLineIntersection(v0_2d, v1_2d, this->pos_2d, newPos_2d, out_tu)) {
-				std::cout << "01\n";
-			}
-			if (lineLineIntersection(v1_2d, v2_2d, this->pos_2d, newPos_2d, out_tu)) {
-				glm::vec2 is1 = (1.0f-out_tu[0]) * v1_2d + out_tu[0] * v2_2d;
-				std::cout << "12\n";
-				glmPrint(is1);
-			}
-			if (lineLineIntersection(v2_2d, v0_2d, this->pos_2d, newPos_2d, out_tu)) {
-				std::cout << "20\n";
-			}
-			return true;
-		}
+	/// checks whether the line B=[startpt, endpt] crosses the line A=[v0, v1],
+	/// Returns true, if intersection. In this case, the remaining length of B is returned projected on A and its normal.
+	bool moveOverEdge(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& startpt, const glm::vec2& endpt, float& remLengthOnv0v1, float& remLengthOnv0v1normal){
+		glm::vec2 out_tu;
+		if (!lineLineIntersection(v0, v1, startpt, endpt, out_tu))
+			return false;
+
+		// === calculate intersection point from returned barycentric coordinates ===
+		glm::vec2 isPt = (1.0f-out_tu[0]) * this->v1_2d + out_tu[0] * this->v2_2d;
+		glm::vec2 rem = endpt-isPt;
+
+		// === project on [v0, v1] ===
+		glm::vec2 remParallel = (v1-v0)*glm::dot(v1-v0, rem)/(glm::length(v1-v0)*glm::length(rem));
+		glm::vec2 remOrthogonal = rem - remParallel;
+		remLengthOnv0v1 = glm::length(remParallel);
+		remLengthOnv0v1normal = glm::length(remOrthogonal);
+		return true;
 	}
+
 protected:
 	antCrawlerSurface *surface;
 	unsigned int currentTriIx = 0;
