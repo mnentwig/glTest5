@@ -138,7 +138,8 @@ public:
 		/// movement ended in a different tri than where it started
 		NEIGHBOR_TRI,
 		/// movement over the edge (clipped)
-		OVER_THE_EDGE};
+		OVER_THE_EDGE
+	};
 
 	moveResult_e move(const glm::vec3 delta) { // return quat?
 		glm::vec2 dir_2d = this->m3dTo2d * delta;
@@ -152,40 +153,63 @@ public:
 			float remLengthPerpendicular;
 			surface::vertexIx_t va_ix;
 			surface::vertexIx_t vb_ix;
+			float isBaryAB;
 
-			if (moveOverEdge(this->v0_2d, this->v1_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)) {
-				edgeCrossed = true;
-				va_ix = this->v0_ix;
-				vb_ix = this->v1_ix;
-				std::cout << "01\n";
-			} else if (moveOverEdge(this->v1_2d, this->v2_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)) {
-				edgeCrossed = true;
-				va_ix = this->v1_ix;
-				vb_ix = this->v2_ix;
-				std::cout << "12\n";
-			} else if (moveOverEdge(this->v2_2d, this->v0_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)) {
-				edgeCrossed = true;
-				va_ix = this->v2_ix;
-				vb_ix = this->v0_ix;
-				std::cout << "20\n";
+			for (surface::vertexIx_t ixVa = 0; ixVa < 3; ++ixVa) {
+				surface::vertexIx_t ixVb = ixVa < 2 ? ixVa + 1 : 0;
+				if (moveOverEdge(this->v_2d[ixVa], this->v_2d[ixVb], this->pos_2d, newPos_2d, /*out*/isBaryAB, remLengthParallel, remLengthPerpendicular)) {
+					edgeCrossed = true;
+					va_ix = this->v_ix[ixVa];
+					vb_ix = this->v_ix[ixVb];
+					std::cout << ixVa << ixVb << "\n";
+					break;
+				}
 			}
-
 			if (!edgeCrossed) {
 				this->pos_2d = newPos_2d;
 				return res;
 			}
 
 			surface::triIx_t neighborTri;
-			if (!this->surface->getNeighbor(va_ix, vb_ix, this->currentTriIx, neighborTri)){
-				// hit the edge of the mesh
+			if (!this->surface->getNeighbor(va_ix, vb_ix, this->currentTriIx, neighborTri)) {
 				return moveResult_e::OVER_THE_EDGE;
 			}
 
 			this->setTri(neighborTri);
+
+			// === identify the vertices of the new "current" tri ===
+			int internalIxA = this->identifyVertex(va_ix); // first point on neighbor edge
+			int internalIxB = this->identifyVertex(vb_ix); // second point on neighbor edge
+			int internalIxC = this->identifyVertex(internalIxA, internalIxB); // non-adjacent point
+
+			glm::vec2 unitParallel;
+			glm::vec2 unitPerpendicular;
+			geomUtils2d::orthogonalize(this->v_2d[internalIxA], this->v_2d[internalIxB], this->v_2d[internalIxC], /*out*/unitParallel, unitPerpendicular);
+
+			continue with isBary as startpoint for new pos_2d calculation
+
+
+			// ===
 		}
 	}
 
 protected:
+	int identifyVertex(surface::vertexIx_t targetIx) {
+		for (int internalIx = 0; internalIx < 3; ++internalIx)
+			if (this->v_ix[internalIx] == targetIx)
+				return internalIx;
+		throw new std::runtime_error("identify vertex: not found");
+	}
+
+	int identifyVertex(int internalIxA, int internalIxB){
+		if ((internalIxA == 1) && (internalIxB ==2) ) return 3;
+		if ((internalIxA == 1) && (internalIxB ==3) ) return 2;
+		if ((internalIxA == 2) && (internalIxB ==1) ) return 3;
+		if ((internalIxA == 2) && (internalIxB ==3) ) return 1;
+		if ((internalIxA == 3) && (internalIxB ==1) ) return 2;
+		if ((internalIxA == 3) && (internalIxB ==2) ) return 1;
+		throw new std::runtime_error("identify vertex: invalid args");
+	}
 	unsigned int locateTriByVerticalDrop(float xInit, float zInit) const {
 		const glm::vec3 *v0;
 		const glm::vec3 *v1;
@@ -226,7 +250,7 @@ protected:
 		const glm::vec3 *v2;
 		this->surface->getTri(triIx, &v0, &v1, &v2);
 
-		this->surface->getVertexIx(triIx, this->v0_ix, this->v1_ix, this->v2_ix);
+		this->surface->getVertexIx(triIx, /*out*/this->v_ix[0], this->v_ix[1], this->v_ix[2]);
 		// === normal vector in 3d ===
 		const glm::vec3 normalTri = glm::normalize(glm::cross(*v1 - *v0, *v2 - *v0));
 		// === targeted normal vector in 2d when z is eliminated ===
@@ -242,10 +266,10 @@ protected:
 
 		// === transform 3d triangle to 2d with constant z ===
 		glm::vec3 v0_2dPlusZ = this->m3dTo2d * (*v0);
-		this->v0_2d = v0_2dPlusZ;
 		this->commonZ = v0_2dPlusZ.z; // keep z from one arbitrary vertex
-		this->v1_2d = this->m3dTo2d * (*v1); // other vertices z will be identical, no need to calculate
-		this->v2_2d = this->m3dTo2d * (*v2);
+		this->v_2d[0] = v0_2dPlusZ;
+		this->v_2d[1] = this->m3dTo2d * (*v1); // other vertices z will be identical, no need to calculate
+		this->v_2d[2] = this->m3dTo2d * (*v2);
 	}
 
 	static bool lineLineIntersection(const glm::vec2 &p1, const glm::vec2 &p2, const glm::vec2 &p3, const glm::vec2 &p4, glm::vec2 &out_tu) {
@@ -272,17 +296,19 @@ protected:
 
 	/// checks whether the line B=[startpt, endpt] crosses the line A=[v0, v1],
 	/// Returns true, if intersection. In this case, the remaining length of B is returned projected on A and its normal.
-	bool moveOverEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
+	bool moveOverEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float& isBary01, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
 		glm::vec2 out_tu;
 		if (!lineLineIntersection(v0, v1, startpt, endpt, out_tu))
 			return false;
 
 		// === calculate intersection point from returned barycentric coordinates ===
-		glm::vec2 isPt = (1.0f - out_tu[0]) * this->v1_2d + out_tu[0] * this->v2_2d;
+		isBary01 = out_tu[0];
+		glm::vec2 isPt = (1.0f - isBary01) * v0 + isBary01 * v1;
 		glm::vec2 rem = endpt - isPt;
 
 		// === project on [v0, v1] ===
-		glm::vec2 remParallel = (v1 - v0) * glm::dot(v1 - v0, rem) / (glm::length(v1 - v0) * glm::length(rem));
+		glm::vec2 v0v1 = v1 - v0;
+		glm::vec2 remParallel = v0v1 * glm::dot(v0v1, rem) / (glm::length(v0v1) * glm::length(rem));
 		glm::vec2 remOrthogonal = rem - remParallel;
 		remLengthOnv0v1 = glm::length(remParallel);
 		remLengthOnv0v1normal = glm::length(remOrthogonal);
@@ -295,12 +321,8 @@ protected:
 	glm::mat3 m3dTo2d;
 	glm::mat3 m2dTo3d;
 	glm::vec2 pos_2d;
-	glm::vec2 v0_2d;
-	surface::vertexIx_t v0_ix;
-	glm::vec2 v1_2d;
-	surface::vertexIx_t v1_ix;
-	glm::vec2 v2_2d;
-	surface::vertexIx_t v2_ix;
+	glm::vec2 v_2d[3];
+	surface::vertexIx_t v_ix[3];
 
 	glm::vec3 posCache_3d;
 	float commonZ;

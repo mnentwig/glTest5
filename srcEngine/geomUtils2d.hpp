@@ -78,6 +78,19 @@ public:
 		}
 	}
 #endif
+
+	/// returns a unit vector AB, and an orthogonal vector towards C
+	static void orthogonalize(const glm::vec2 &ptA, const glm::vec2 &ptB, const glm::vec2 &ptC, /*out*/glm::vec2 &unitAB, glm::vec2 &unitOrth) const {
+		unitAB = ptB - ptA;
+		unitAB /= glm::length(unitAB);
+
+		glm::vec2 AC = ptC - ptA;
+
+		glm::vec2 orthStart = ptA + unitAB * glm::dot(unitAB, AC);
+		unitOrth = ptC - orthStart;
+		unitOrth /= glm::length(unitOrth);
+	}
+
 protected:
 	static float triCheckSignNoY(const glm::vec3 &p1, const glm::vec3 &p2, const glm::vec3 &p3) {
 		return (p1.x - p3.x) * (p2.z - p3.z) - (p2.x - p3.x) * (p1.z - p3.z);
