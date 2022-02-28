@@ -81,14 +81,11 @@ public:
 
 	/// returns a unit vector AB, and an orthogonal vector towards C
 	static void orthogonalize(const glm::vec2 &ptA, const glm::vec2 &ptB, const glm::vec2 &ptC, /*out*/glm::vec2 &unitAB, glm::vec2 &unitOrth) {
-		unitAB = ptB - ptA;
-		unitAB /= glm::length(unitAB);
+		unitAB = glm::normalize(ptB - ptA);
 
 		glm::vec2 AC = ptC - ptA;
-
 		glm::vec2 orthStart = ptA + unitAB * glm::dot(unitAB, AC);
-		unitOrth = ptC - orthStart;
-		unitOrth /= glm::length(unitOrth);
+		unitOrth = glm::normalize(ptC - orthStart);
 	}
 
 protected:

@@ -315,9 +315,9 @@ protected:
 		glm::vec2 isPt = (1.0f - isBary01) * v0 + isBary01 * v1;
 		glm::vec2 rem = endpt - isPt;
 
-		// === project on [v0, v1] ===
-		glm::vec2 v0v1 = v1 - v0;
-		glm::vec2 remParallel = v0v1 * glm::dot(v0v1, rem) / (glm::length(v0v1) * glm::length(rem));
+		// === project rem on [v0, v1] ===
+		glm::vec2 v0v1norm = glm::normalize(v1 - v0);
+		glm::vec2 remParallel = v0v1norm * glm::dot(v0v1norm, rem);
 		glm::vec2 remOrthogonal = rem - remParallel;
 		remLengthOnv0v1 = glm::length(remParallel);
 		remLengthOnv0v1normal = glm::length(remOrthogonal);
