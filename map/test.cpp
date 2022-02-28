@@ -48,9 +48,23 @@ class antCrawlerSurface: public surface {
 			this->registerEdge(eh12, triIx);
 			this->registerEdge(eh20, triIx);
 		}
-		bool getNeighbor(vertexIx_t va, vertexIx_t vb, triIx_t startTri, triIx_t& neighborTri) const {
+		bool getNeighbor(vertexIx_t va, vertexIx_t vb, triIx_t startTri, triIx_t &neighborTri) const {
 			edgeHash_t eh = getEdgeHash(va, vb);
-			xxxx hier weiter
+			auto it = this->table.find(eh);
+			if (it == this->table.end())
+				return false;
+			const edge_t &e = (*it).second;
+			triIx_t i1 = std::get<0>(e);
+			if (i1 != startTri) {
+				neighborTri = i1;
+				return true;
+			}
+			triIx_t i2 = std::get<1>(e);
+			if (i2 != startTri) {
+				neighborTri = i2;
+				return true;
+			}
+			return false;
 		}
 	protected:
 		std::map<edgeHash_t, edge_t> table;
@@ -75,12 +89,16 @@ class antCrawlerSurface: public surface {
 		static bool hasTwoNeighbors(edgeHash_t h) {
 			return (h >> 32) != (h & 0xFFFFFFFF);
 		}
-	};
+	}; // class neighborTable
 
 public:
 	antCrawlerSurface() :
 			surface() {
 	}
+	bool getNeighbor(vertexIx_t va, vertexIx_t vb, triIx_t startTri, triIx_t &neighborTri) const {
+		return this->neighborTable.getNeighbor(va, vb, startTri, neighborTri);
+	}
+
 protected:
 	neighborTable_cl neighborTable;
 	void buildNeighborTable() {
@@ -114,8 +132,17 @@ public:
 		return this->posCache_3d;
 	}
 
-	void move(const glm::vec3 delta) { // return quat?
+	enum moveResult_e {
+		/// movement ended in same tri as it started
+		SAME_TRI,
+		/// movement ended in a different tri than where it started
+		NEIGHBOR_TRI,
+		/// movement over the edge (clipped)
+		OVER_THE_EDGE};
+
+	moveResult_e move(const glm::vec3 delta) { // return quat?
 		glm::vec2 dir_2d = this->m3dTo2d * delta;
+		moveResult_e res = moveResult_e::SAME_TRI;
 		while (true) {
 			glm::vec2 newPos_2d = this->pos_2d + dir_2d;
 
@@ -126,27 +153,35 @@ public:
 			surface::vertexIx_t va_ix;
 			surface::vertexIx_t vb_ix;
 
-			if (moveOverEdge(this->v0_2d, this->v1_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)){
-				edgeCrossed=true;
+			if (moveOverEdge(this->v0_2d, this->v1_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)) {
+				edgeCrossed = true;
 				va_ix = this->v0_ix;
 				vb_ix = this->v1_ix;
 				std::cout << "01\n";
-			} else if (moveOverEdge(this->v1_2d, this->v2_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)){
-				edgeCrossed=true;
+			} else if (moveOverEdge(this->v1_2d, this->v2_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)) {
+				edgeCrossed = true;
 				va_ix = this->v1_ix;
 				vb_ix = this->v2_ix;
 				std::cout << "12\n";
-			} else if (moveOverEdge(this->v2_2d, this->v0_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)){
-				edgeCrossed=true;
+			} else if (moveOverEdge(this->v2_2d, this->v0_2d, this->pos_2d, newPos_2d, remLengthParallel, remLengthPerpendicular)) {
+				edgeCrossed = true;
 				va_ix = this->v2_ix;
 				vb_ix = this->v0_ix;
 				std::cout << "20\n";
 			}
 
-			if (!edgeCrossed){
+			if (!edgeCrossed) {
 				this->pos_2d = newPos_2d;
-				return;
+				return res;
 			}
+
+			surface::triIx_t neighborTri;
+			if (!this->surface->getNeighbor(va_ix, vb_ix, this->currentTriIx, neighborTri)){
+				// hit the edge of the mesh
+				return moveResult_e::OVER_THE_EDGE;
+			}
+
+			this->setTri(neighborTri);
 		}
 	}
 
@@ -183,7 +218,7 @@ protected:
 		return this->m3dTo2d * pos_3d;
 	}
 
-	void setTri(unsigned int triIx){
+	void setTri(surface::triIx_t triIx) {
 		this->currentTriIx = triIx;
 
 		const glm::vec3 *v0;
@@ -237,17 +272,17 @@ protected:
 
 	/// checks whether the line B=[startpt, endpt] crosses the line A=[v0, v1],
 	/// Returns true, if intersection. In this case, the remaining length of B is returned projected on A and its normal.
-	bool moveOverEdge(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& startpt, const glm::vec2& endpt, float& remLengthOnv0v1, float& remLengthOnv0v1normal){
+	bool moveOverEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
 		glm::vec2 out_tu;
 		if (!lineLineIntersection(v0, v1, startpt, endpt, out_tu))
 			return false;
 
 		// === calculate intersection point from returned barycentric coordinates ===
-		glm::vec2 isPt = (1.0f-out_tu[0]) * this->v1_2d + out_tu[0] * this->v2_2d;
-		glm::vec2 rem = endpt-isPt;
+		glm::vec2 isPt = (1.0f - out_tu[0]) * this->v1_2d + out_tu[0] * this->v2_2d;
+		glm::vec2 rem = endpt - isPt;
 
 		// === project on [v0, v1] ===
-		glm::vec2 remParallel = (v1-v0)*glm::dot(v1-v0, rem)/(glm::length(v1-v0)*glm::length(rem));
+		glm::vec2 remParallel = (v1 - v0) * glm::dot(v1 - v0, rem) / (glm::length(v1 - v0) * glm::length(rem));
 		glm::vec2 remOrthogonal = rem - remParallel;
 		remLengthOnv0v1 = glm::length(remParallel);
 		remLengthOnv0v1normal = glm::length(remOrthogonal);
@@ -256,7 +291,7 @@ protected:
 
 protected:
 	antCrawlerSurface *surface;
-	unsigned int currentTriIx = 0;
+	surface::triIx_t currentTriIx = 0;
 	glm::mat3 m3dTo2d;
 	glm::mat3 m2dTo3d;
 	glm::vec2 pos_2d;
