@@ -201,23 +201,23 @@ protected:
 		for (int internalIx = 0; internalIx < 3; ++internalIx)
 			if (this->v_ix[internalIx] == targetIx)
 				return internalIx;
-		throw new std::runtime_error("identify vertex: not found");
+		throw std::runtime_error("identify vertex: not found");
 	}
 
 	int identifyVertex(int internalIxA, int internalIxB) {
+		if ((internalIxA == 0) && (internalIxB == 1))
+			return 2;
+		if ((internalIxA == 0) && (internalIxB == 2))
+			return 1;
+		if ((internalIxA == 1) && (internalIxB == 0))
+			return 2;
 		if ((internalIxA == 1) && (internalIxB == 2))
-			return 3;
-		if ((internalIxA == 1) && (internalIxB == 3))
-			return 2;
+			return 0;
+		if ((internalIxA == 2) && (internalIxB == 0))
+			return 1;
 		if ((internalIxA == 2) && (internalIxB == 1))
-			return 3;
-		if ((internalIxA == 2) && (internalIxB == 3))
-			return 1;
-		if ((internalIxA == 3) && (internalIxB == 1))
-			return 2;
-		if ((internalIxA == 3) && (internalIxB == 2))
-			return 1;
-		throw new std::runtime_error("identify vertex: invalid args");
+			return 0;
+		throw std::runtime_error("identify vertex: invalid args");
 	}
 	unsigned int locateTriByVerticalDrop(float xInit, float zInit) const {
 		const glm::vec3 *v0;
@@ -229,7 +229,7 @@ protected:
 				return triIx;
 			}
 		}
-		throw new std::runtime_error("failed to locate tri by vertical drop");
+		throw std::runtime_error("failed to locate tri by vertical drop");
 	}
 
 	glm::vec2 getPosByVerticalDrop(float xInit, float zInit) const {
@@ -338,12 +338,20 @@ protected:
 };
 } // namespace
 int main(void) {
-	engine::myAntCrawlerSurface s;
-	engine::antCrawler a(&s, 0.4, 0.4);
-	a.move(glm::vec3(10, 0, 0));
+	try {
+		engine::myAntCrawlerSurface s;
+		engine::antCrawler a(&s, 0.4, 0.4);
+		std::cout << a.move(glm::vec3(10, 0, 0)) << std::endl;
 
-	std::vector<std::tuple<int, int, int>> test;
-	std::tuple<int, int, int> abc = { 1, 2, 3 };
-	test.push_back(abc);
-	return 0;
+		return EXIT_SUCCESS;
+#if 0
+	catch (const std::runtime_error &e) {
+		std::cout << "runtime error:" << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+#else
+	} catch (char a) {
+		// dummy
+	}
+#endif
 }
