@@ -136,9 +136,9 @@ public:
 		/// movement ended in same tri as it started
 		SAME_TRI,
 		/// movement ended in a different tri than where it started
-		NEIGHBOR_TRI,
+		OTHER_TRI,
 		/// movement over the edge (clipped)
-		OVER_THE_EDGE
+		OFF_SURFACE
 	};
 
 	moveResult_e move(const glm::vec3 delta) { // return quat?
@@ -149,15 +149,15 @@ public:
 
 			// === check whether the movement crosses an edge (leaves the triangle) ===
 			bool edgeCrossed = false;
-			float remLengthParallel;
-			float remLengthPerpendicular;
+			float remLengthParallelToEdge;
+			float remLengthOrthogonalToEdge;
 			surface::vertexIx_t va_ix;
 			surface::vertexIx_t vb_ix;
 			float isBaryAB;
 
 			for (surface::vertexIx_t ixVa = 0; ixVa < 3; ++ixVa) {
 				surface::vertexIx_t ixVb = ixVa < 2 ? ixVa + 1 : 0;
-				if (moveOverEdge(this->v_2d[ixVa], this->v_2d[ixVb], this->pos_2d, newPos_2d, /*out*/isBaryAB, remLengthParallel, remLengthPerpendicular)) {
+				if (moveOverEdge(this->v_2d[ixVa], this->v_2d[ixVb], this->pos_2d, newPos_2d, /*out*/isBaryAB, remLengthParallelToEdge, remLengthOrthogonalToEdge)) {
 					edgeCrossed = true;
 					va_ix = this->v_ix[ixVa];
 					vb_ix = this->v_ix[ixVb];
@@ -172,24 +172,27 @@ public:
 
 			surface::triIx_t neighborTri;
 			if (!this->surface->getNeighbor(va_ix, vb_ix, this->currentTriIx, neighborTri)) {
-				return moveResult_e::OVER_THE_EDGE;
+				return moveResult_e::OFF_SURFACE;
 			}
 
 			this->setTri(neighborTri);
+			res = moveResult_e::OTHER_TRI;
 
 			// === identify the vertices of the new "current" tri ===
 			int internalIxA = this->identifyVertex(va_ix); // first point on neighbor edge
 			int internalIxB = this->identifyVertex(vb_ix); // second point on neighbor edge
 			int internalIxC = this->identifyVertex(internalIxA, internalIxB); // non-adjacent point
 
-			glm::vec2 unitParallel;
-			glm::vec2 unitPerpendicular;
-			geomUtils2d::orthogonalize(this->v_2d[internalIxA], this->v_2d[internalIxB], this->v_2d[internalIxC], /*out*/unitParallel, unitPerpendicular);
+			// === calculate unit vectors of the new tri corresponding to remLengthParallelToEdge / remLengthOrthogonalToEdge
+			glm::vec2 unitDirParallelToEdge;
+			glm::vec2 unitDirOrthogonalToEdge;
+			geomUtils2d::orthogonalize(this->v_2d[internalIxA], this->v_2d[internalIxB], this->v_2d[internalIxC], /*out*/unitDirParallelToEdge, unitDirOrthogonalToEdge);
 
-			continue with isBary as startpoint for new pos_2d calculation
+			// === set new position on common edge ===
+			this->pos_2d = (1.0f - isBaryAB) * this->v_2d[internalIxA] + isBaryAB * this->v_2d[internalIxB];
 
-
-			// ===
+			// === update direction ===
+			dir_2d = remLengthParallelToEdge * unitDirParallelToEdge + remLengthOrthogonalToEdge * unitDirOrthogonalToEdge;
 		}
 	}
 
@@ -201,13 +204,19 @@ protected:
 		throw new std::runtime_error("identify vertex: not found");
 	}
 
-	int identifyVertex(int internalIxA, int internalIxB){
-		if ((internalIxA == 1) && (internalIxB ==2) ) return 3;
-		if ((internalIxA == 1) && (internalIxB ==3) ) return 2;
-		if ((internalIxA == 2) && (internalIxB ==1) ) return 3;
-		if ((internalIxA == 2) && (internalIxB ==3) ) return 1;
-		if ((internalIxA == 3) && (internalIxB ==1) ) return 2;
-		if ((internalIxA == 3) && (internalIxB ==2) ) return 1;
+	int identifyVertex(int internalIxA, int internalIxB) {
+		if ((internalIxA == 1) && (internalIxB == 2))
+			return 3;
+		if ((internalIxA == 1) && (internalIxB == 3))
+			return 2;
+		if ((internalIxA == 2) && (internalIxB == 1))
+			return 3;
+		if ((internalIxA == 2) && (internalIxB == 3))
+			return 1;
+		if ((internalIxA == 3) && (internalIxB == 1))
+			return 2;
+		if ((internalIxA == 3) && (internalIxB == 2))
+			return 1;
 		throw new std::runtime_error("identify vertex: invalid args");
 	}
 	unsigned int locateTriByVerticalDrop(float xInit, float zInit) const {
@@ -296,7 +305,7 @@ protected:
 
 	/// checks whether the line B=[startpt, endpt] crosses the line A=[v0, v1],
 	/// Returns true, if intersection. In this case, the remaining length of B is returned projected on A and its normal.
-	bool moveOverEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float& isBary01, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
+	bool moveOverEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float &isBary01, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
 		glm::vec2 out_tu;
 		if (!lineLineIntersection(v0, v1, startpt, endpt, out_tu))
 			return false;
