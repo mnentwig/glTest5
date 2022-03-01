@@ -7,12 +7,14 @@
 #include <map>
 #include <cassert>
 #include <iostream> // !!
+//#include <sstream>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/normal.hpp>
 #include <glm/gtx/intersect.hpp>
 #include "../srcEngine/geomUtils2d.hpp"
 #include "../srcEngine/glmPrint.hpp"
+#include "plotly.hpp"
 namespace engine {
 class surface {
 public:
@@ -114,6 +116,22 @@ public:
 			antCrawlerSurface() {
 #include "generated.h"
 		this->buildNeighborTable();
+		plotly p("index.html");
+		for (unsigned int ixTri = 0; ixTri < this->tris.size(); ++ixTri) {
+			p.appendVec("triVertexA", std::get<0>(this->tris[ixTri]));
+			p.appendVec("triVertexB", std::get<1>(this->tris[ixTri]));
+			p.appendVec("triVertexC", std::get<2>(this->tris[ixTri]));
+			float f = (float) ixTri / this->tris.size();
+			std::stringstream ss;
+			ss << "'rgb(" << f << "," << f << "," << f << ")'";
+			p.appendVec("triColor", ss.str());
+		}
+		for (glm::vec3 &v : this->vertices) {
+			p.appendVec("triVertexX", v.x);
+			p.appendVec("triVertexY", v.y);
+			p.appendVec("triVertexZ", v.z);
+		}
+		p.close();
 	}
 };
 
