@@ -116,24 +116,24 @@ public:
 			antCrawlerSurface() {
 #include "generated.h"
 		this->buildNeighborTable();
-		plotly p("index.html");
+	}
+	void plot(plotly &p) const {
+		std::string id = p.getNewId();
 		for (unsigned int ixTri = 0; ixTri < this->tris.size(); ++ixTri) {
-			p.appendVec("triVertexA", std::get<0>(this->tris[ixTri]));
-			p.appendVec("triVertexB", std::get<1>(this->tris[ixTri]));
-			p.appendVec("triVertexC", std::get<2>(this->tris[ixTri]));
+			p.appendVec(id + "triVertexA", std::get<0>(this->tris[ixTri]));
+			p.appendVec(id + "triVertexB", std::get<1>(this->tris[ixTri]));
+			p.appendVec(id + "triVertexC", std::get<2>(this->tris[ixTri]));
 			float f = (float) ixTri / this->tris.size();
 			std::stringstream ss;
 			ss << "'rgb(" << f << "," << f << "," << f << ")'";
-			p.appendVec("triColor", ss.str());
+			p.appendVec(id + "triColor", ss.str());
 		}
-		for (glm::vec3 &v : this->vertices) {
-			p.appendVec("triVertexX", v.x);
-			p.appendVec("triVertexY", v.y);
-			p.appendVec("triVertexZ", v.z);
+		for (const glm::vec3 &v : this->vertices) {
+			p.appendVec(id + "triVertexX", v.x);
+			p.appendVec(id + "triVertexY", v.y);
+			p.appendVec(id + "triVertexZ", v.z);
 		}
-		p.mesh3d("triVertexX", "triVertexY", "triVertexZ", "triVertexA", "triVertexB", "triVertexC", "triColor");
-		p.scatter3d("triVertexX", "triVertexY", "triVertexZ");
-		p.close();
+		p.mesh3d(id + "triVertexX", id + "triVertexY", id + "triVertexZ", id + "triVertexA", id + "triVertexB", id + "triVertexC", id + "triColor");
 	}
 };
 
@@ -165,51 +165,74 @@ public:
 		glm::vec2 dir_2d = this->m3dTo2d * delta;
 		moveResult_e res = moveResult_e::SAME_TRI;
 		while (true) {
-			glm::vec2 newPos_2d = this->pos_2d + dir_2d;
+			std::cout << "remaining length: " << glm::length(dir_2d) << "\n";
+			glm::vec2 prelimNewPos_2d = this->pos_2d + dir_2d;
 
 			// === check whether the movement crosses an edge (leaves the triangle) ===
+			/// did we cross an edge?
 			bool edgeCrossed = false;
+			/// if crossed, how much movement is left unspent along the edge?
 			float remLengthParallelToEdge;
+			/// if crossed, how much movement is left unspent perpendicular to the edge (towards the neighbor's 3rd point)
 			float remLengthOrthogonalToEdge;
-			surface::vertexIx_t va_ix;
-			surface::vertexIx_t vb_ix;
+			/// internal index (0..2) of the first point of the crossed edge
+			unsigned int origInternalIxA;
+			/// internal index (0..2) of the first point of the crossed edge
+			unsigned int origInternalIxB;
+			/// first edge vertex index
+			surface::vertexIx_t vertexNumA;
+			/// second edge vertex index
+			surface::vertexIx_t vertexNumB;
+			/// intersection location
 			float isBaryAB;
 
 			for (surface::vertexIx_t ixVa = 0; ixVa < 3; ++ixVa) {
 				surface::vertexIx_t ixVb = ixVa < 2 ? ixVa + 1 : 0;
-				if (moveOverEdge(this->v_2d[ixVa], this->v_2d[ixVb], this->pos_2d, newPos_2d, /*out*/isBaryAB, remLengthParallelToEdge, remLengthOrthogonalToEdge)) {
+				if (moveOverEdge(this->v_2d[ixVa], this->v_2d[ixVb], this->pos_2d, prelimNewPos_2d, /*out*/isBaryAB, remLengthParallelToEdge, remLengthOrthogonalToEdge)) {
 					edgeCrossed = true;
-					va_ix = this->v_ix[ixVa];
-					vb_ix = this->v_ix[ixVb];
-					std::cout << ixVa << ixVb << "\n";
+					origInternalIxA = ixVa;
+					origInternalIxB = ixVb;
+					vertexNumA = this->v_ix[ixVa];
+					vertexNumB = this->v_ix[ixVb];
 					break;
 				}
 			}
 			if (!edgeCrossed) {
-				this->pos_2d = newPos_2d;
+				this->pos_2d = prelimNewPos_2d;
 				return res;
 			}
 
+			// === Identify neighbor on the crossed edge ===
 			surface::triIx_t neighborTri;
-			if (!this->surface->getNeighbor(va_ix, vb_ix, this->currentTriIx, neighborTri)) {
+			if (!this->surface->getNeighbor(vertexNumA, vertexNumB, this->currentTriIx, neighborTri)) {
+				// === no neighbor exists. Set new position on border edge ===
+				this->pos_2d = (1.0f - isBaryAB) * this->v_2d[origInternalIxA] + isBaryAB * this->v_2d[origInternalIxB];
 				return moveResult_e::OFF_SURFACE;
 			}
 
-			this->setTri(neighborTri);
 			res = moveResult_e::OTHER_TRI;
 
-			// === identify the vertices of the new "current" tri ===
-			int internalIxA = this->identifyVertex(va_ix); // first point on neighbor edge
-			int internalIxB = this->identifyVertex(vb_ix); // second point on neighbor edge
-			int internalIxC = this->identifyVertex(internalIxA, internalIxB); // non-adjacent point
+			// === Load the neighbor tri ===
+			// Note: As the 3d-to-2d mapping changes with the inclination of the new tri,
+			// 2d coordinates (of the common edge) can*t be carried over and need to be looked up again.
+			this->setTri(neighborTri);
+
+			// === identify the vertices of the common edge on the neighbor = new "current" tri ===
+			// "internalIx" = 0..2
+			int internalIxA = this->identifyVertex(vertexNumA); // first point on neighbor edge
+			int internalIxB = this->identifyVertex(vertexNumB); // second point on neighbor edge
+			int internalIxC = this->thirdInternalIx(internalIxA, internalIxB); // non-adjacent point
+
+			// === look up the common-edge vertices ===
+			const glm::vec2& neighborPtA = this->v_2d[internalIxA];
+			const glm::vec2& neighborPtB = this->v_2d[internalIxB];
+			// === use the barycentric coefficient for ptA-ptB to determine the new 2d position ===
+			this->pos_2d = (1.0f - isBaryAB) * neighborPtA + isBaryAB * neighborPtB;
 
 			// === calculate unit vectors of the new tri corresponding to remLengthParallelToEdge / remLengthOrthogonalToEdge
 			glm::vec2 unitDirParallelToEdge;
 			glm::vec2 unitDirOrthogonalToEdge;
 			geomUtils2d::orthogonalize(this->v_2d[internalIxA], this->v_2d[internalIxB], this->v_2d[internalIxC], /*out*/unitDirParallelToEdge, unitDirOrthogonalToEdge);
-
-			// === set new position on common edge ===
-			this->pos_2d = (1.0f - isBaryAB) * this->v_2d[internalIxA] + isBaryAB * this->v_2d[internalIxB];
 
 			// === update direction ===
 			dir_2d = remLengthParallelToEdge * unitDirParallelToEdge + remLengthOrthogonalToEdge * unitDirOrthogonalToEdge;
@@ -224,7 +247,7 @@ protected:
 		throw std::runtime_error("identify vertex: not found");
 	}
 
-	int identifyVertex(int internalIxA, int internalIxB) {
+	int thirdInternalIx(int internalIxA, int internalIxB) {
 		if ((internalIxA == 0) && (internalIxB == 1))
 			return 2;
 		if ((internalIxA == 0) && (internalIxB == 2))
@@ -359,9 +382,20 @@ protected:
 } // namespace
 int main(void) {
 	try {
+		plotly p("index.html");
 		engine::myAntCrawlerSurface s;
-		engine::antCrawler a(&s, 0.4, 0.4);
-		std::cout << a.move(glm::vec3(10, 0, 0)) << std::endl;
+
+		std::string id = p.getNewId();
+		for (float d = 0; d < 1; d += 0.1) {
+			engine::antCrawler a(&s, 0.4, 0.4);
+			a.move(glm::vec3(d, 0, 0));
+			glm::vec3 pos = a.getPos();
+			p.appendVecXYZ(id + "path", pos);
+		}
+		p.scatter3d(id + "path");
+
+		s.plot(p);
+		p.close();
 
 		return EXIT_SUCCESS;
 #if 0

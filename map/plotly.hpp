@@ -35,6 +35,12 @@ public:
 		f.close();
 	}
 
+	void appendVecXYZ(std::string vecName, glm::vec3 val) {
+		this->appendVec(vecName + "X", val.x);
+		this->appendVec(vecName + "Y", val.y);
+		this->appendVec(vecName + "Z", val.z);
+	}
+
 	template<typename T> void appendVec(std::string vecName, T value) {
 		auto iter = this->vectors.emplace(vecName, "");
 		bool entryIsNew = iter.second;
@@ -50,17 +56,28 @@ public:
 		this->data << "{type:'mesh3d', x:" << x << ", y:" << y << ", z:" << z << ", i: " << i << ", j:" << j << ", k: " << k;
 		if (facecolor.length() > 0)
 			this->data << ", facecolor:" << facecolor;
-		this->data << ", lighting: {ambient: 1, diffuse:0}}\n";
+		this->data << ", lighting: {ambient:1, diffuse:0}}\n";
+	}
+
+	void scatter3d(std::string name) {
+		this->scatter3d(name + "X", name + "Y", name + "Z");
 	}
 
 	void scatter3d(std::string x, std::string y, std::string z) {
 		if (this->data.str().length() > 0)
 			this->data << ",";
 		this->data << "{type:'scatter3d', x:" << x << ", y:" << y << ", z:" << z << ", mode:'markers'}";
-
 	}
+
+	std::string getNewId() {
+		std::stringstream ss;
+		ss << "ID" << (this->idCount++);
+		return ss.str();
+	}
+
 protected:
 	std::string filename;
 	std::map<std::string, std::stringstream> vectors;
 	std::stringstream data;
+	int idCount = 0;
 };
