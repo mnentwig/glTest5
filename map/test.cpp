@@ -131,6 +131,8 @@ public:
 			p.appendVec("triVertexY", v.y);
 			p.appendVec("triVertexZ", v.z);
 		}
+		p.mesh3d("triVertexX", "triVertexY", "triVertexZ", "triVertexA", "triVertexB", "triVertexC", "triColor");
+		p.scatter3d("triVertexX", "triVertexY", "triVertexZ");
 		p.close();
 	}
 };

@@ -25,7 +25,7 @@ public:
 		f << "<div id=\"myPlot\"></div>\n";
 		f << "<script>\n";
 		f << s.str();
-		f << "var data = [{type:\"mesh3d\", x:triVertexX, y: triVertexY, z:triVertexZ, i: triVertexA, j:triVertexB, k:triVertexC, facecolor: triColor, lighting: {ambient:1, diffuse:0}}];\n";
+		f << "var data = [\n" << this->data.str() << "\n];\n";
 		f << "var layout = {autosize:false, width: 800, height:800};\n";
 		f << "var config = {displaylogo: false};\n";
 		f << "Plotly.newPlot(\"myPlot\", data, layout, config);\n";
@@ -43,7 +43,24 @@ public:
 			ss << ",";
 		ss << value;
 	}
+
+	void mesh3d(std::string x, std::string y, std::string z, std::string i, std::string j, std::string k, std::string facecolor) {
+		if (this->data.str().length() > 0)
+			this->data << ",";
+		this->data << "{type:'mesh3d', x:" << x << ", y:" << y << ", z:" << z << ", i: " << i << ", j:" << j << ", k: " << k;
+		if (facecolor.length() > 0)
+			this->data << ", facecolor:" << facecolor;
+		this->data << ", lighting: {ambient: 1, diffuse:0}}\n";
+	}
+
+	void scatter3d(std::string x, std::string y, std::string z) {
+		if (this->data.str().length() > 0)
+			this->data << ",";
+		this->data << "{type:'scatter3d', x:" << x << ", y:" << y << ", z:" << z << ", mode:'markers'}";
+
+	}
 protected:
 	std::string filename;
 	std::map<std::string, std::stringstream> vectors;
+	std::stringstream data;
 };
