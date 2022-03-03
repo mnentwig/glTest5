@@ -162,13 +162,11 @@ public:
 	};
 
 	moveResult_e move(const glm::vec3 delta) { // return quat?
-		std::cout << "move\n";
 		glm::vec2 dir_2d = this->m3dTo2d * delta;
 		moveResult_e res = moveResult_e::SAME_TRI;
 		// all three edges are checked for intersection
 		edgeHash_t edgeUnderPos2d = 0;
 		while (true) {
-			std::cout << "remaining length: " << glm::length(dir_2d) << "\n";
 			glm::vec2 prelimNewPos_2d = this->pos_2d + dir_2d;
 
 			// === check whether the movement crosses an edge (leaves the triangle) ===
@@ -223,7 +221,6 @@ public:
 			// === Load the neighbor tri ===
 			// Note: As the 3d-to-2d mapping changes with the inclination of the new tri, 2d coordinates become invalid
 			res = moveResult_e::OTHER_TRI;
-			std::cout << "new tri: " << neighborTri << "\n";
 			this->setTri(neighborTri);
 
 			// === identify the vertices of the common edge on the neighbor = new "current" tri ===
@@ -301,8 +298,7 @@ protected:
 		glm::vec3 rayDir = glm::vec3(0, 1, 0);
 		glm::vec2 baryPosition;
 		float dist;
-		bool hit = glm::intersectRayTriangle(rayOrig, rayDir, *v0, *v1, *v2, baryPosition, dist);
-		std::cout << hit << " " << dist << "\n";
+		glm::intersectRayTriangle(rayOrig, rayDir, *v0, *v1, *v2, baryPosition, dist);
 		glm::vec3 pos_3d(xInit, dist, zInit);
 		return this->m3dTo2d * pos_3d;
 	}
@@ -376,7 +372,7 @@ protected:
 		float f = glm::dot(v0v1norm, rem);
 		glm::vec2 remParallel = v0v1norm * f;
 		glm::vec2 remOrthogonal = rem - remParallel;
-		remLengthOnv0v1 = f; // note, negative values are possible
+		remLengthOnv0v1 = f; // note, negative values are possible as the vector direction must be from A to B
 		remLengthOnv0v1normal = glm::length(remOrthogonal);
 
 		return true;
@@ -421,6 +417,7 @@ int main(void) {
 		s.plot(p);
 		p.close();
 
+		std::cout << "done\n";
 		return EXIT_SUCCESS;
 #if 0
 	catch (const std::runtime_error &e) {
