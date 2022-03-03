@@ -158,81 +158,93 @@ public:
 		/// movement ended in a different tri than where it started
 		OTHER_TRI,
 		/// movement over the edge (clipped)
-		OFF_SURFACE
+		BORDER
 	};
 
 	moveResult_e move(const glm::vec3 delta) { // return quat?
+		std::cout << "move\n";
 		glm::vec2 dir_2d = this->m3dTo2d * delta;
 		moveResult_e res = moveResult_e::SAME_TRI;
+		// all three edges are checked for intersection
+		edgeHash_t edgeUnderPos2d = 0;
 		while (true) {
 			std::cout << "remaining length: " << glm::length(dir_2d) << "\n";
 			glm::vec2 prelimNewPos_2d = this->pos_2d + dir_2d;
 
 			// === check whether the movement crosses an edge (leaves the triangle) ===
-			/// did we cross an edge?
-			bool edgeCrossed = false;
 			/// if crossed, how much movement is left unspent along the edge?
 			float remLengthParallelToEdge;
 			/// if crossed, how much movement is left unspent perpendicular to the edge (towards the neighbor's 3rd point)
 			float remLengthOrthogonalToEdge;
-			/// internal index (0..2) of the first point of the crossed edge
-			unsigned int origInternalIxA;
-			/// internal index (0..2) of the first point of the crossed edge
-			unsigned int origInternalIxB;
-			/// first edge vertex index
-			surface::vertexIx_t vertexNumA;
-			/// second edge vertex index
-			surface::vertexIx_t vertexNumB;
-			/// intersection location
+			/// first edge vertex number (valid regardless of current tri)
+			surface::vertexIx_t commonEdgeVertexNumA;
+			/// second edge vertex number (valid regardless of current tri)
+			surface::vertexIx_t commonEdgeVertexNumB;
+			/// intersection location between common edge VA/VB
 			float isBaryAB;
+			// identified neighbor
+			surface::triIx_t neighborTri;
+			{
+				/// internal index (0..2) of the first point of the crossed edge (valid only for the original tri)
+				unsigned int origIxVA_0to2;
+				/// internal index (0..2) of the first point of the crossed edge (valid only for the original tri)
+				unsigned int origIxVB_0to2;
+				for (origIxVA_0to2 = 0; origIxVA_0to2 < 3; ++origIxVA_0to2) {
+					origIxVB_0to2 = origIxVA_0to2 < 2 ? origIxVA_0to2 + 1 : 0;
+					// === skip the edge we're on (if any) ===
+					// note: This happens only when it is known that movement entered through said edge, therefore it cannot leave through the same edge.
+					edgeHash_t eh = getEdgeHash(this->v_ix[origIxVA_0to2], this->v_ix[origIxVB_0to2]);
+					if (eh == edgeUnderPos2d)
+						continue;
 
-			for (surface::vertexIx_t ixVa = 0; ixVa < 3; ++ixVa) {
-				surface::vertexIx_t ixVb = ixVa < 2 ? ixVa + 1 : 0;
-				if (moveOverEdge(this->v_2d[ixVa], this->v_2d[ixVb], this->pos_2d, prelimNewPos_2d, /*out*/isBaryAB, remLengthParallelToEdge, remLengthOrthogonalToEdge)) {
-					edgeCrossed = true;
-					origInternalIxA = ixVa;
-					origInternalIxB = ixVb;
-					vertexNumA = this->v_ix[ixVa];
-					vertexNumB = this->v_ix[ixVb];
-					break;
+					if (testCrossingAndProjectOnEdge(this->v_2d[origIxVA_0to2], this->v_2d[origIxVB_0to2], this->pos_2d, prelimNewPos_2d, /*out*/isBaryAB, remLengthParallelToEdge, remLengthOrthogonalToEdge)) {
+						// pos_2d will move onto this edge, therefore exclude it from the next intersection check
+						edgeUnderPos2d = eh;
+						goto edgeCrossed;
+					}
+				}
+
+				// === movement ends in current tri => we're done ===
+				this->pos_2d = prelimNewPos_2d;
+				return res; // ----------------------------------------------------------------------------------------
+
+				edgeCrossed: commonEdgeVertexNumA = this->v_ix[origIxVA_0to2];
+				commonEdgeVertexNumB = this->v_ix[origIxVB_0to2];
+
+				// === Identify neighbor on the crossed edge ===
+				if (!this->surface->getNeighbor(commonEdgeVertexNumA, commonEdgeVertexNumB, this->currentTriIx, /*out*/neighborTri)) {
+					// === no neighbor exists. Set new position on border edge ===
+					this->pos_2d = (1.0f - isBaryAB) * this->v_2d[origIxVA_0to2] + isBaryAB * this->v_2d[origIxVB_0to2];
+					// leave
+					return moveResult_e::BORDER;
 				}
 			}
-			if (!edgeCrossed) {
-				this->pos_2d = prelimNewPos_2d;
-				return res;
-			}
-
-			// === Identify neighbor on the crossed edge ===
-			surface::triIx_t neighborTri;
-			if (!this->surface->getNeighbor(vertexNumA, vertexNumB, this->currentTriIx, neighborTri)) {
-				// === no neighbor exists. Set new position on border edge ===
-				this->pos_2d = (1.0f - isBaryAB) * this->v_2d[origInternalIxA] + isBaryAB * this->v_2d[origInternalIxB];
-				return moveResult_e::OFF_SURFACE;
-			}
-
-			res = moveResult_e::OTHER_TRI;
 
 			// === Load the neighbor tri ===
-			// Note: As the 3d-to-2d mapping changes with the inclination of the new tri,
-			// 2d coordinates (of the common edge) can*t be carried over and need to be looked up again.
+			// Note: As the 3d-to-2d mapping changes with the inclination of the new tri, 2d coordinates become invalid
+			res = moveResult_e::OTHER_TRI;
+			std::cout << "new tri: " << neighborTri << "\n";
 			this->setTri(neighborTri);
 
 			// === identify the vertices of the common edge on the neighbor = new "current" tri ===
-			// "internalIx" = 0..2
-			int internalIxA = this->identifyVertex(vertexNumA); // first point on neighbor edge
-			int internalIxB = this->identifyVertex(vertexNumB); // second point on neighbor edge
-			int internalIxC = this->thirdInternalIx(internalIxA, internalIxB); // non-adjacent point
+			int internalIxA_0to2 = this->identifyVertex(commonEdgeVertexNumA); // first point on neighbor edge
+			int internalIxB_0to2 = this->identifyVertex(commonEdgeVertexNumB); // second point on neighbor edge
+			int internalIxC_0to2 = this->thirdInternalIx(internalIxA_0to2, internalIxB_0to2); // non-adjacent point
 
-			// === look up the common-edge vertices ===
-			const glm::vec2& neighborPtA = this->v_2d[internalIxA];
-			const glm::vec2& neighborPtB = this->v_2d[internalIxB];
+			// === look up 2d vertices ===
+			const glm::vec2 &commonEdgeVertexPosA = this->v_2d[internalIxA_0to2];
+			const glm::vec2 &commonEdgeVertexPosB = this->v_2d[internalIxB_0to2];
+			const glm::vec2 &vertexPosC = this->v_2d[internalIxC_0to2];
+
 			// === use the barycentric coefficient for ptA-ptB to determine the new 2d position ===
-			this->pos_2d = (1.0f - isBaryAB) * neighborPtA + isBaryAB * neighborPtB;
+			this->pos_2d = (1.0f - isBaryAB) * commonEdgeVertexPosA + isBaryAB * commonEdgeVertexPosB;
 
 			// === calculate unit vectors of the new tri corresponding to remLengthParallelToEdge / remLengthOrthogonalToEdge
+			/// unit vector in AB direction
 			glm::vec2 unitDirParallelToEdge;
+			/// unit vector orthogonal to AB, pointing towards C
 			glm::vec2 unitDirOrthogonalToEdge;
-			geomUtils2d::orthogonalize(this->v_2d[internalIxA], this->v_2d[internalIxB], this->v_2d[internalIxC], /*out*/unitDirParallelToEdge, unitDirOrthogonalToEdge);
+			geomUtils2d::orthogonalize(commonEdgeVertexPosA, commonEdgeVertexPosB, vertexPosC, /*out*/unitDirParallelToEdge, unitDirOrthogonalToEdge);
 
 			// === update direction ===
 			dir_2d = remLengthParallelToEdge * unitDirParallelToEdge + remLengthOrthogonalToEdge * unitDirOrthogonalToEdge;
@@ -262,6 +274,7 @@ protected:
 			return 0;
 		throw std::runtime_error("identify vertex: invalid args");
 	}
+
 	unsigned int locateTriByVerticalDrop(float xInit, float zInit) const {
 		const glm::vec3 *v0;
 		const glm::vec3 *v1;
@@ -348,7 +361,7 @@ protected:
 
 	/// checks whether the line B=[startpt, endpt] crosses the line A=[v0, v1],
 	/// Returns true, if intersection. In this case, the remaining length of B is returned projected on A and its normal.
-	bool moveOverEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float &isBary01, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
+	bool testCrossingAndProjectOnEdge(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &startpt, const glm::vec2 &endpt, float &isBary01, float &remLengthOnv0v1, float &remLengthOnv0v1normal) {
 		glm::vec2 out_tu;
 		if (!lineLineIntersection(v0, v1, startpt, endpt, out_tu))
 			return false;
@@ -360,10 +373,12 @@ protected:
 
 		// === project rem on [v0, v1] ===
 		glm::vec2 v0v1norm = glm::normalize(v1 - v0);
-		glm::vec2 remParallel = v0v1norm * glm::dot(v0v1norm, rem);
+		float f = glm::dot(v0v1norm, rem);
+		glm::vec2 remParallel = v0v1norm * f;
 		glm::vec2 remOrthogonal = rem - remParallel;
-		remLengthOnv0v1 = glm::length(remParallel);
+		remLengthOnv0v1 = f; // note, negative values are possible
 		remLengthOnv0v1normal = glm::length(remOrthogonal);
+
 		return true;
 	}
 
@@ -377,7 +392,16 @@ protected:
 	surface::vertexIx_t v_ix[3];
 
 	glm::vec3 posCache_3d;
+
 	float commonZ;
+	typedef uint64_t edgeHash_t;
+	static edgeHash_t getEdgeHash(surface::vertexIx_t v1, surface::vertexIx_t v2) {
+		assert(v1 != v2);
+		if (v1 < v2)
+			return (edgeHash_t) v1 | (edgeHash_t) v2 << 32;
+		else
+			return (edgeHash_t) v2 | (edgeHash_t) v1 << 32;
+	}
 };
 } // namespace
 int main(void) {
@@ -386,7 +410,7 @@ int main(void) {
 		engine::myAntCrawlerSurface s;
 
 		std::string id = p.getNewId();
-		for (float d = 0; d < 1; d += 0.1) {
+		for (float d = 0; d < 0.3; d += 0.01) {
 			engine::antCrawler a(&s, 0.4, 0.4);
 			a.move(glm::vec3(d, 0, 0));
 			glm::vec3 pos = a.getPos();
