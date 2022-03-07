@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <glm/vec3.hpp>
 class plotly {
 public:
 	plotly(std::string filename) {
