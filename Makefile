@@ -7,12 +7,13 @@
 # note: Conventionally the engine would be .so/.a/.dll, this approach works with individual 
 # object files, somewhat less complex in debugging
 objs_user := main.o
-objs_engine := engine.o instMan.o instStackTriInst.o explosible.o explTraj.o observer.o
+objs_engine := engine.o instMan.o instStackTriInst.o explosible.o explTraj.o observer.o map/surface.o map/antCrawlerSurface.o map/myAntCrawlerSurface.o map/antCrawler.o
 LIBS_WIN = -lglew32.dll -lglfw3.dll -lopengl32
 LIBS_RASPI = -L/usr/lib/aarch64-linux-gnu -lGL -lglfw
 
 CC := g++
-CFLAGS := -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -g -O3
+# regarding "-I.": #includes should preferably be referenced to the top level directory, not the location of the including file (unless it's the same)
+CFLAGS := -Wall -Werror -fmax-errors=1 -pedantic -Wextra -Wno-unused -g -O3 -I.
 
 OBJECTS_USER := $(addprefix build/,$(objs_user))
 OBJECTS_ENGINE := $(addprefix buildEngine/,$(objs_engine))

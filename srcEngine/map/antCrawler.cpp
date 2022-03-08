@@ -1,5 +1,5 @@
 #include "antCrawler.h"
-#include "../srcEngine/geomUtils2d.hpp"
+#include "srcEngine/geomUtils2d.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/intersect.hpp>
@@ -161,7 +161,7 @@ glm::vec2 antCrawler::getPosByVerticalDrop(float xInit, float zInit) const {
 	glm::vec3 rayOrig = glm::vec3(xInit, 0, zInit);
 	glm::vec3 rayDir = glm::vec3(0, 1, 0);
 	glm::vec2 baryPosition;
-	float dist;
+	float dist=-1;
 	glm::intersectRayTriangle(rayOrig, rayDir, *v0, *v1, *v2, baryPosition, dist);
 	glm::vec3 pos_3d(xInit, dist, zInit);
 	return this->m3dTo2d * pos_3d;
