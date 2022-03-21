@@ -67,6 +67,19 @@ void instMan::endFrame() {
 	assert(this->frameIsOn);
 	this->frameIsOn = false;
 
+	// === render non-overlays (drawing order does not matter) ===
+	for (auto it = this->templates.begin(); it != this->templates.end(); ++it) {
+		instTemplate *t = *it;
+		glm::mat4 *proj = t->proj.data();
+		int nInst = t->proj.size();
+		for (unsigned int ixIs = 0; ixIs < t->isti.size(); ++ixIs) {
+			if (!t->overlayMode) {
+				t->isti[ixIs]->run(proj, t->cols[ixIs].data(), nInst);
+			}
+		}
+	}
+
+	// === render overlays (after non-overlays, drawing order DOES matter) ===
 	for (auto it = this->templates.begin(); it != this->templates.end(); ++it) {
 		instTemplate *t = *it;
 		glm::mat4 *proj = t->proj.data();
@@ -74,8 +87,6 @@ void instMan::endFrame() {
 		for (unsigned int ixIs = 0; ixIs < t->isti.size(); ++ixIs) {
 			if (t->overlayMode) {
 				t->isti[ixIs]->runOverlay(proj, t->cols[ixIs].data(), nInst);
-			} else {
-				t->isti[ixIs]->run(proj, t->cols[ixIs].data(), nInst);
 			}
 		}
 	}

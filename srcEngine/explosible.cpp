@@ -261,6 +261,9 @@ mgeng::instanced::instanced(mgeng::root *root, unsigned int nCol, bool isOverlay
 	this->ex = new engine::explosible(&root->eng->im, nCol, isOverlay);
 }
 
+mgeng::instanced::~instanced() {
+}
+
 void mgeng::instanced::generateOutlinedShape(std::vector<glm::vec3> vertices, float width, unsigned int ixColOutline, unsigned int ixColFill, bool hitscanEnable) {
 	this->ex->generateOutlinedShape(vertices, width, ixColOutline, ixColFill, hitscanEnable);
 }

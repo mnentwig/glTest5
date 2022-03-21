@@ -9,6 +9,8 @@
 #include "../srcEngine/map/myAntCrawlerSurface.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
+#include "conveyor/payloadMan.h"
+#include "conveyor/payload.h"
 
 mgeng::instanced* generateTestcube(mgeng::root *mgengRoot, float edgeLen, float width) {
 	mgeng::instanced *ex = new mgeng::instanced(mgengRoot, /*nCols*/2, /*isOverlay*/false);
@@ -91,6 +93,7 @@ public:
 		delete this->expl;
 	}
 };
+#include <src/conveyor/convMan.h>
 int main(void) {
 	srand(0);
 #ifdef NDEBUG
@@ -122,12 +125,22 @@ int main(void) {
 	colCrosshairs.push_back(glm::vec3(1, 1, 1));
 	glm::mat4 projCrosshairs;
 
+	game::convMan convMan(&mgengRoot, colDefault);
+	glm::mat4 t1 = glm::translate(glm::mat4(1.0f), glm::vec3(10, 10, 10));
+	glm::mat4 t2 = glm::translate(glm::mat4(1.0f), glm::vec3(10, 20, 10));
+	game::convSeg* s1 = convMan.newSeg_straight(t1);
+	game::convSeg* s2 = convMan.newSeg_straight(t2);
+	convMan.connect(s1, s2);
+
+	game::payloadMan plm(&mgengRoot, colDefault);
+	game::payload* pl = plm.payload_new();
+	pl->setPosition(s1, 12);
+
 	std::set<appObj*> appObjs;
 	for (float x = -10; x <= 10; ++x) {
 		for (float z = -11; z <= -10; ++z) {
 			appObj *o = new appObj(testcube, &colDefault, &colHighlight);
 			o->model2world = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0, z));
-			o->inst = testcube;
 			o->state = appObj::state_e::ACTIVE;
 			appObjs.emplace(o);
 		}
@@ -150,7 +163,7 @@ int main(void) {
 		if (pds->screenSizeChanged) {
 			mgengRoot.getScreenWidthHeight(screenWidth, screenHeight);
 			persp = glm::perspective(45.0f, 1.0f * screenWidth / screenHeight, 0.01f, 1000.0f);
-			projCrosshairs = persp * glm::translate (glm::mat4 (1.0f), glm::vec3 (0, 0, -50));
+			projCrosshairs = persp * glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -50));
 		}
 
 		// === camera controls ===
@@ -193,6 +206,7 @@ int main(void) {
 				break;
 			}
 		}
+		convMan.render(proj);
 
 		crosshairs->render(projCrosshairs, colCrosshairs);
 

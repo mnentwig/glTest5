@@ -145,7 +145,6 @@ void instStackTriInst::finalize() {
 	GL_CHK(glBindBuffer(GL_ARRAY_BUFFER, 0));
 	GL_CHK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
-
 void instStackTriInst::runOverlay(const glm::mat4 *const proj, const glm::vec3 *const rgb, int nInst) const {
 	GL_CHK(glDisable (GL_DEPTH_TEST));
 	this->run(proj, rgb, nInst);
