@@ -48,4 +48,15 @@ payload* payloadMan::payload_new() {
 	pl->inst = this->inst;
 	return pl;
 }
+
+void payloadMan::timeslice(float now_s) {
+	float deltaT_s = this->lastNow_s - now_s;
+	this->lastNow_s = now_s;
+	if (std::isnan(now_s))
+		return;
+	for (auto it:this->payloadTrains){
+//		it->timeslice(deltaT_s);
+	}
 }
+
+} // namespace

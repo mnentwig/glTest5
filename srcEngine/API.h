@@ -2,6 +2,7 @@
 #include <glm/fwd.hpp>
 #include <glm/mat4x4.hpp>
 #include <vector>
+#include "srcEngine/util/noncopyable.h"
 
 typedef unsigned int GLenum;
 typedef unsigned int GLbitfield;
@@ -33,14 +34,6 @@ namespace mgeng {
 class observer;
 class instanced;
 class instancedExplosion;
-
-class noncopyable {
-protected:
-	constexpr noncopyable() = default;
-	~noncopyable() = default;
-	noncopyable(const noncopyable&) = delete;
-	noncopyable& operator=(const noncopyable&) = delete;
-};
 
 // glTypes here...
 struct triIx16 {
